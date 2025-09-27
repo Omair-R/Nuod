@@ -76,10 +76,58 @@ rotl64 :: proc "contextless"(x: u64, r: u64) -> u64{
 }
 
 
-PCGRandomState :: struct {
-	state : u64,
+RandomState64 :: struct{
+	x: u64,
 }
 
+RandomState128 :: struct{
+	x: u64,
+	y: u64,
+}
+
+inner_rand_proc :: proc(
+	$T: typeid,
+	$RS: typeid,
+	init_f : proc(rs: ^RS, seed: u64),
+	read_f : proc "contextless" (rs: ^RS) -> T,
+	data: rawptr,
+	mode: rt.Random_Generator_Mode,
+	p: []byte
+){
+	@(thread_local)
+	global_rand_seed : RS
+
+	rs : ^RS = ---
+
+	if data == nil {
+		rs = &global_rand_seed 
+	} else {
+		rs = (cast(^RS)data)
+	} 
+
+	switch mode {
+		case .Read:
+			if rs.x == 0 {
+				init_f(rs, 0)
+			}
+
+			switch len(p){
+				case size_of(T):
+					intrinsics.unaligned_store(cast(^T)raw_data(p), read_f(rs))
+				case:
+					handle_arbitrary_read(T, rs, read_f, p)					
+			}
+		case .Reset:
+			seed: u64
+			init_f(rs, get_seed(p))
+
+		case .Query_Info:
+			handle_query_info(p, {.Uniform, .Resettable})
+	}
+}
+
+
+PCGRandomState :: RandomState64
 
 pcg_random_proc :: proc(
 	data: rawptr,
@@ -87,52 +135,23 @@ pcg_random_proc :: proc(
 	p: []byte
 ) {
 
-	init :: proc "contextless" (rs: ^PCGRandomState, seed:u64) {
-		rs.state = u64(0)
+	init :: proc (rs: ^RandomState64, seed:u64) {
+		rs.x = u64(0)
 		_ = read_u32(rs)
-		rs.state += seed
+		rs.x += seed
 		_ = read_u32(rs)
 	}
 
-	read_u32 :: proc "contextless"(rs : ^PCGRandomState) -> u32 {
-		t := rs.state
-		rot := cast(u32)(rs.state >> 59)
-		rs.state = t * u64(6364136223846793005) + u64(1442695040888963407)
+	read_u32 :: proc "contextless"(rs : ^RandomState64) -> u32 {
+		t := rs.x
+		rot := cast(u32)(rs.x >> 59)
+		rs.x = t * u64(6364136223846793005) + u64(1442695040888963407)
 		t ~= t >> 18
 		
 		return rotr32(cast(u32)(t>>27), rot)	
 	}
 
-	@(thread_local)
-	pcg_rand_seed: PCGRandomState
-
-	rs : ^PCGRandomState = ---
-
-	if data == nil {
-		rs = &pcg_rand_seed	
-	} else {
-		rs = (cast(^PCGRandomState)data)
-	} 
-
-	switch mode {
-		case .Read:
-			if rs.state == 0 {
-				init(rs, 0)
-			}
-
-			switch len(p){
-				case size_of(u32):
-					intrinsics.unaligned_store(cast(^u32)raw_data(p), read_u32(rs))
-				case:
-					handle_arbitrary_read(u32, rs, read_u32, p)					
-			}
-		case .Reset:
-			seed: u64
-			init(rs, get_seed(p))
-
-		case .Query_Info:
-			handle_query_info(p, {.Uniform, .Resettable})
-	}
+	inner_rand_proc(u32, RandomState64, init, read_u32, data, mode, p)
 }
 
 
@@ -144,10 +163,7 @@ pcg_random_generator :: proc "contextless" (rs : ^PCGRandomState = nil) -> rt.Ra
 }
 
 
-SplitMix64RandomState :: struct {
-	state : u64,
-}
-
+SplitMix64RandomState :: RandomState64
 
 splitmix_random_proc :: proc(
 	data: rawptr,
@@ -155,48 +171,19 @@ splitmix_random_proc :: proc(
 	p: []byte
 ) {
 
-	init :: proc "contextless" (rs: ^SplitMix64RandomState, seed:u64) {
-		rs.state = seed
+	init :: proc (rs: ^SplitMix64RandomState, seed:u64) {
+		rs.x = seed
 	}
 
 	read_u64 :: proc "contextless"(rs : ^SplitMix64RandomState) -> u64 {
-		rs.state += 0x9e3779b97f4a7c15
-		tx := rs.state
+		rs.x += 0x9e3779b97f4a7c15
+		tx := rs.x
 		tx = (tx ~ tx >> 30) * 0xbf58476d1ce4e5b9
 		tx = (tx ~ tx >> 27) * 0x94d049bb133111eb
 		return tx ~ tx >> 31		
 	}
-
-	@(thread_local)
-	split_mix_rand_seed: SplitMix64RandomState
-
-	rs : ^SplitMix64RandomState = ---
-
-	if data == nil {
-		rs = &split_mix_rand_seed	
-	} else {
-		rs = (cast(^SplitMix64RandomState)data)
-	} 
-
-	switch mode {
-		case .Read:
-			if rs.state == 0 {
-				init(rs, 0)
-			}
-
-			switch len(p){
-				case size_of(u64):
-					intrinsics.unaligned_store(cast(^u64)raw_data(p), read_u64(rs))
-				case:
-					handle_arbitrary_read(u64, rs, read_u64, p)					
-			}
-		case .Reset:
-			seed: u64
-			init(rs, get_seed(p))
-
-		case .Query_Info:
-			handle_query_info(p, {.Uniform, .Resettable})
-	}
+	
+	inner_rand_proc(u64, RandomState64, init, read_u64, data, mode, p)
 }
 
 
@@ -209,10 +196,7 @@ splitmix64_random_generator :: proc "contextless" (rs : ^SplitMix64RandomState =
 
 
 
-Xorshift64StarRandomState :: struct {
-	x : u64,
-}
-
+Xorshift64StarRandomState :: RandomState64
 
 xorshift64star_random_proc :: proc(
 	data: rawptr,
@@ -222,7 +206,7 @@ xorshift64star_random_proc :: proc(
 
 	init :: proc (rs: ^Xorshift64StarRandomState , seed:u64) {
 		split_state := SplitMix64RandomState{
-			state=seed
+			x=seed
 		}
 		split_gen := splitmix64_random_generator(&split_state)
 
@@ -238,36 +222,7 @@ xorshift64star_random_proc :: proc(
         return rs.x * u64(0x2545F4914F6CDD1D)
 	}
 
-	@(thread_local)
-	xorshift64star_rand_seed: Xorshift64StarRandomState
-
-	rs : ^Xorshift64StarRandomState = ---
-
-	if data == nil {
-		rs = &xorshift64star_rand_seed	
-	} else {
-		rs = (cast(^Xorshift64StarRandomState)data)
-	} 
-
-	switch mode {
-		case .Read:
-			if rs.x == 0 {
-				init(rs, 0)
-			}
-
-			switch len(p){
-				case size_of(u64):
-					intrinsics.unaligned_store(cast(^u64)raw_data(p), read_u64(rs))
-				case:
-					handle_arbitrary_read(u64, rs, read_u64, p)					
-			}
-		case .Reset:
-			seed: u64
-			init(rs, get_seed(p))
-
-		case .Query_Info:
-			handle_query_info(p, {.Uniform, .Resettable})
-	}
+	inner_rand_proc(u64, RandomState64, init, read_u64, data, mode, p)
 }
 
 
@@ -279,11 +234,7 @@ xorshift64star_random_generator :: proc "contextless" (rs : ^Xorshift64StarRando
 }
 
 
-Xorshift128PlusRandomState :: struct {
-	x : u64,
-	y : u64,
-}
-
+Xorshift128PlusRandomState :: RandomState128
 
 xorshift128plus_random_proc :: proc(
 	data: rawptr,
@@ -293,7 +244,7 @@ xorshift128plus_random_proc :: proc(
 
 	init :: proc (rs: ^Xorshift128PlusRandomState , seed:u64) {
 		split_state := SplitMix64RandomState{
-			state=seed
+			x=seed
 		}
 		split_gen := splitmix64_random_generator(&split_state)
 
@@ -319,36 +270,7 @@ xorshift128plus_random_proc :: proc(
 		return tx + ty
 	}
 
-	@(thread_local)
-	xorshift128plus_rand_seed: Xorshift128PlusRandomState
-
-	rs : ^Xorshift128PlusRandomState = ---
-
-	if data == nil {
-		rs = &xorshift128plus_rand_seed	
-	} else {
-		rs = (cast(^Xorshift128PlusRandomState)data)
-	} 
-
-	switch mode {
-		case .Read:
-			if rs.x == 0 || rs.y == 0 {
-				init(rs, 0)
-			}
-
-			switch len(p){
-				case size_of(u64):
-					intrinsics.unaligned_store(cast(^u64)raw_data(p), read_u64(rs))
-				case:
-					handle_arbitrary_read(u64, rs, read_u64, p)					
-			}
-		case .Reset:
-			seed: u64
-			init(rs, get_seed(p))
-
-		case .Query_Info:
-			handle_query_info(p, {.Uniform, .Resettable})
-	}
+	inner_rand_proc(u64, RandomState128, init, read_u64, data, mode, p)
 }
 
 
