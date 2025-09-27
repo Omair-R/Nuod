@@ -1,5 +1,6 @@
 package random
 
+import "core:fmt"
 
 import "core:math/rand"
 import "base:intrinsics"
@@ -39,6 +40,21 @@ get_seed :: proc "contextless"(
 	}
 	return seed
 }
+
+
+handle_query_info :: proc(p: []byte, info_config: rt.Random_Generator_Query_Info ){
+	if len(p) != size_of(rt.Random_Generator_Query_Info) {
+		return
+	}
+	info := (^rt.Random_Generator_Query_Info)(raw_data(p))
+	info^ += info_config
+}
+
+
+quick_read_ptr :: proc(rg: rt.Random_Generator, p: rawptr, len: uint) {
+	rg.procedure(rg.data, .Read, ([^]byte)(p)[:len])
+}
+
 
 rotr32 :: proc "contextless"(x: u32, r: u32) -> u32{
 	return x >> r | x << (-r & 31)
@@ -88,12 +104,12 @@ pcg_random_proc :: proc(
 	}
 
 	@(thread_local)
-	global_rand_seed: PCGRandomState
+	pcg_rand_seed: PCGRandomState
 
 	rs : ^PCGRandomState = ---
 
 	if data == nil {
-		rs = &global_rand_seed	
+		rs = &pcg_rand_seed	
 	} else {
 		rs = (cast(^PCGRandomState)data)
 	} 
@@ -115,11 +131,7 @@ pcg_random_proc :: proc(
 			init(rs, get_seed(p))
 
 		case .Query_Info:
-			if len(p) != size_of(rt.Random_Generator_Query_Info) {
-				return
-			}
-			info := (^rt.Random_Generator_Query_Info)(raw_data(p))
-			info^ += {.Uniform, .Resettable}
+			handle_query_info(p, {.Uniform, .Resettable})
 	}
 }
 
@@ -183,18 +195,168 @@ splitmix_random_proc :: proc(
 			init(rs, get_seed(p))
 
 		case .Query_Info:
-			if len(p) != size_of(rt.Random_Generator_Query_Info) {
-				return
-			}
-			info := (^rt.Random_Generator_Query_Info)(raw_data(p))
-			info^ += {.Uniform, .Resettable}
+			handle_query_info(p, {.Uniform, .Resettable})
 	}
 }
 
 
 splitmix64_random_generator :: proc "contextless" (rs : ^SplitMix64RandomState = nil) -> rt.Random_Generator {
 	return {
-		procedure = pcg_random_proc,
+		procedure = splitmix_random_proc,
 		data = rs,
 	}
 }
+
+
+
+Xorshift64StarRandomState :: struct {
+	x : u64,
+}
+
+
+xorshift64star_random_proc :: proc(
+	data: rawptr,
+	mode: rt.Random_Generator_Mode,
+	p: []byte
+) {
+
+	init :: proc (rs: ^Xorshift64StarRandomState , seed:u64) {
+		split_state := SplitMix64RandomState{
+			state=seed
+		}
+		split_gen := splitmix64_random_generator(&split_state)
+
+		x: u64
+		quick_read_ptr(split_gen, &x, size_of(x))
+		rs.x = x
+	}
+
+	read_u64 :: proc "contextless"(rs : ^Xorshift64StarRandomState) -> u64 {
+		rs.x ~= rs.x >> 12
+        rs.x ~= rs.x >> 25
+        rs.x ~= rs.x >> 26
+        return rs.x * u64(0x2545F4914F6CDD1D)
+	}
+
+	@(thread_local)
+	xorshift64star_rand_seed: Xorshift64StarRandomState
+
+	rs : ^Xorshift64StarRandomState = ---
+
+	if data == nil {
+		rs = &xorshift64star_rand_seed	
+	} else {
+		rs = (cast(^Xorshift64StarRandomState)data)
+	} 
+
+	switch mode {
+		case .Read:
+			if rs.x == 0 {
+				init(rs, 0)
+			}
+
+			switch len(p){
+				case size_of(u64):
+					intrinsics.unaligned_store(cast(^u64)raw_data(p), read_u64(rs))
+				case:
+					handle_arbitrary_read(u64, rs, read_u64, p)					
+			}
+		case .Reset:
+			seed: u64
+			init(rs, get_seed(p))
+
+		case .Query_Info:
+			handle_query_info(p, {.Uniform, .Resettable})
+	}
+}
+
+
+xorshift64star_random_generator :: proc "contextless" (rs : ^Xorshift64StarRandomState = nil) -> rt.Random_Generator {
+	return {
+		procedure = xorshift64star_random_proc,
+		data = rs,
+	}
+}
+
+
+Xorshift128PlusRandomState :: struct {
+	x : u64,
+	y : u64,
+}
+
+
+xorshift128plus_random_proc :: proc(
+	data: rawptr,
+	mode: rt.Random_Generator_Mode,
+	p: []byte
+) {
+
+	init :: proc (rs: ^Xorshift128PlusRandomState , seed:u64) {
+		split_state := SplitMix64RandomState{
+			state=seed
+		}
+		split_gen := splitmix64_random_generator(&split_state)
+
+		x: u64
+		quick_read_ptr(split_gen, &x, size_of(x))
+		rs.x = x
+		quick_read_ptr(split_gen, &x, size_of(x))
+		rs.y = x
+	}
+
+	read_u64 :: proc "contextless"(rs : ^Xorshift128PlusRandomState) -> u64 {
+		tx := rs.x
+		ty := rs.y
+
+		rs.x = ty
+
+		tx ~= tx << 23
+		tx ~= tx >> 18
+		tx ~= ty ~ ty >> 5
+
+		rs.y = tx
+
+		return tx + ty
+	}
+
+	@(thread_local)
+	xorshift128plus_rand_seed: Xorshift128PlusRandomState
+
+	rs : ^Xorshift128PlusRandomState = ---
+
+	if data == nil {
+		rs = &xorshift128plus_rand_seed	
+	} else {
+		rs = (cast(^Xorshift128PlusRandomState)data)
+	} 
+
+	switch mode {
+		case .Read:
+			if rs.x == 0 || rs.y == 0 {
+				init(rs, 0)
+			}
+
+			switch len(p){
+				case size_of(u64):
+					intrinsics.unaligned_store(cast(^u64)raw_data(p), read_u64(rs))
+				case:
+					handle_arbitrary_read(u64, rs, read_u64, p)					
+			}
+		case .Reset:
+			seed: u64
+			init(rs, get_seed(p))
+
+		case .Query_Info:
+			handle_query_info(p, {.Uniform, .Resettable})
+	}
+}
+
+
+xorshift128plus_random_generator :: proc "contextless" (rs : ^Xorshift128PlusRandomState = nil) -> rt.Random_Generator {
+	return {
+		procedure = xorshift128plus_random_proc,
+		data = rs,
+	}
+}
+
+
