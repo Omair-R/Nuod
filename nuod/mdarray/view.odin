@@ -171,13 +171,18 @@ narrow :: proc(
 		return {}, ok
 	}
 
-	if begin > end || end >= mdarray.shape[axis]{
+	end := end
+	if end == -1 {
+		end = mdarray.shape[axis]
+	}
+
+	if begin >= end || end > mdarray.shape[axis]{
 		logging.error(.ArguementError, "The narrow range provided is incorrect.", location=location)
 		return {}, ok
 	}
 
 	shape := mdarray.shape
-	shape[axis] = end - begin + 1
+	shape[axis] = end - begin
 	offset_plus := begin * mdarray.strides[axis]
 
 	result = MdArray(T, Nd){
