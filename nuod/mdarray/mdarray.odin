@@ -287,6 +287,7 @@ cast_array :: proc(
 	source: MdArray($T, $Nd),
 	$to_type: typeid,
 	allocator := context.allocator,
+	location:=#caller_location,
 ) -> (
 	mdarray: MdArray(to_type, Nd),
 	ok: bool,
@@ -295,7 +296,7 @@ cast_array :: proc(
 
 	validate_initialized(source, location) or_return
 
-	mdarray = zeros(to_type, source.shape, allocator = location) or_return
+	mdarray = make_mdarray(to_type, source.shape, allocator, location) or_return
 	
 	if !source.is_view {
 		for i in 0 ..< size(mdarray) {

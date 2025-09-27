@@ -3,7 +3,7 @@ package linalg
 import "core:fmt"
 import "base:intrinsics"
 import md "../mdarray"
-
+import "../logging"
 
 inner_product :: proc(	
 	a: md.MdArray($T, 1),
@@ -13,10 +13,18 @@ inner_product :: proc(
 	 result:T,
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	//TODO ensure valid and same length
+
+	md.validate_initialized(a, location) or_return
+	md.validate_initialized(b, location) or_return
+
+	if a.shape != b.shape{
+		logging.error(.ArguementError, "the length of the vectors should be equal.", location)
+	}
+
 	for i in 0..<md.size(a){
 		result += md.get_linear(a, i) * md.get_linear(b, i)	
 	}
+
 	return result, true
 }
 
@@ -30,7 +38,10 @@ outer_product :: proc(
 	 result:md.MdArray(T, 2),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	//TODO ensure valid 
+
+	md.validate_initialized(a, location) or_return
+	md.validate_initialized(b, location) or_return
+
 	result = md.make_mdarray(T, [2]int{a.shape[0], b.shape[0]})
 
 	for i in 0..<md.size(a){
@@ -51,7 +62,10 @@ kron_vector_product :: proc(
 	 result:md.MdArray(T, 1),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	//TODO ensure valid
+
+	md.validate_initialized(a, location) or_return
+	md.validate_initialized(b, location) or_return
+
 	outer := outer_product(a, b, allocator, location) or_return
 	defer md.free_mdarray(outer)
 	result = md.flatten_copy(outer, allocator, location) or_return 
@@ -68,6 +82,10 @@ matmul :: proc(
 	 result:md.MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T), Nd>=2 #optional_ok {
+
+	md.validate_initialized(a, location) or_return
+	md.validate_initialized(b, location) or_return
+
 	a_shape : [Nd+1]int
 	b_shape : [Nd+1]int
 

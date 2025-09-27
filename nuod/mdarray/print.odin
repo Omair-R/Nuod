@@ -6,13 +6,13 @@ import "core:slice"
 
 _fprint_2d ::proc(
 	handle: os.Handle,
-	buffer :[]$T,
+	mdarray :MdArray($T, $Nd),
 	last_dim: int,
 	indent:int,
 	newline:bool=false,
 	flush:bool=true
 ) {
-	n_sig : int = len(buffer)/last_dim
+	n_sig : int = size(mdarray)/last_dim
 
 	fmt.fprint(handle, "[", flush=false)
 
@@ -22,17 +22,24 @@ _fprint_2d ::proc(
 				fmt.fprint(handle, " ", flush=false)
 			}
 		}
-		i_dim := i * last_dim
 
-		fmt.fprint(handle, buffer[i_dim:i_dim+last_dim], flush=false)
+		fmt.fprint(handle, "[", flush=false)
+		i_end := i*last_dim + last_dim
+		for i_dim:= i*last_dim; i_dim < i_end; i_dim += 1{
+			fmt.fprint(handle, get_linear(mdarray, i_dim), flush=false)
+			if i_dim != i_end-1{
+				fmt.fprint(handle, ", ", flush = false)
+			}
+		}
+		fmt.fprint(handle, "]", flush=false)
 
 		if i != n_sig-1{
 			fmt.fprintln(handle, ",", flush = false)
 		}
 	}
 
-	if newline {
-		fmt.fprintln(handle, "]", flush=flush)
+	if newline{
+		fmt.fprintln(handle, "]", flush=true)
 		return
 	}
 
@@ -46,34 +53,62 @@ _fprint_inner :: proc(
 	indent : int,
 	newline: bool =false
 ) {
-	switch ndim(mdarray) {
-	case 1:
+	
+	when Nd ==1 {				
 		if newline{
 			fmt.fprintln(handle, mdarray.buffer)
 		}else {
 			fmt.fprint(handle, mdarray.buffer)
 		}		
-	case 2:
-		last_dim := mdarray.shape[ndim(mdarray)-1]
-		_fprint_2d(handle, mdarray.buffer, last_dim, 1, newline=newline)
-	case :
-		//TODO
-	}
+	} else when Nd==2{
+		offset := 0
+		last_dim := mdarray.shape[Nd-1]
+		_fprint_2d(handle, mdarray, last_dim, indent=indent, newline=newline)
+	} else {				
+		first_dim := mdarray.shape[0]
 
+		fmt.fprint(handle, "[", flush=false)
+
+		for i in 0..<first_dim{
+
+			sliced_view, ok := slice_view(Nd, mdarray, i)
+			if !ok { return }
+
+			_fprint_inner(handle, sliced_view, indent, false)
+
+			if i != first_dim - 1 {
+				fmt.fprintln(handle, ",", flush = false)
+				fmt.fprintln(handle, "", flush = false)
+
+				indent := indent-ndim(mdarray)+2
+				for _ in 0..<indent{
+					fmt.fprint(handle, " ", flush = false)
+				}
+			}
+		}
+
+
+		if newline {
+			fmt.fprintln(handle, "]", flush=true)
+			return
+		}
+
+		fmt.fprint(handle, "]", flush=true)
+	}
 	return
 }
 
 
 fprint :: proc(handle: os.Handle, mdarray: MdArray($T, $Nd)){
 	if is_none(mdarray) {return } 
-	indent := ndim(mdarray) -2
+	indent := ndim(mdarray)-1
 	_fprint_inner(handle, mdarray, indent)
 }
 
 
 fprintln :: proc(handle: os.Handle, mdarray: MdArray($T, $Nd)){
 	if is_none(mdarray) {return } 
-	indent := ndim(mdarray) -2
+	indent := ndim(mdarray) -1
 	_fprint_inner(handle, mdarray, indent, newline=true)
 }
 
