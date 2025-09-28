@@ -54,7 +54,8 @@ main :: proc () {
 }
 
 ```
-
+## Acknowledgment
+Special thanks to [Kalsprite](https://github.com/kalsprite) for providing [OpenBLAS](https://github.com/OpenMathLib/OpenBLAS) [bindings](https://github.com/kalsprite/odin-openblas).
 ## Todo List
 - [ ] create user-defined formats for MdArray and register it.
 - [ ] comment documentation.
