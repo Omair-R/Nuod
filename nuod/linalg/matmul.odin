@@ -4,6 +4,8 @@ import "core:fmt"
 import "base:intrinsics"
 import md "../mdarray"
 import "../logging"
+import "../cblas"
+
 
 inner_product :: proc(	
 	a: md.MdArray($T, 1),
@@ -120,6 +122,102 @@ matmul :: proc(
 
 
 	result = md.dim_reduce_sum(Nd+1, inter_mul, Nd-1, allocator=allocator, location=location) or_return 
+
+	return result, true
+}
+
+
+// The name is temp.
+cblas_matmul :: proc(	
+	a: md.MdArray($T, $Nd),
+	b: md.MdArray(T, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 result:md.MdArray(T, Nd),
+	 ok:bool,
+) where intrinsics.type_is_float(T), Nd>=2 #optional_ok {
+
+	md.validate_initialized(a, location) or_return
+	md.validate_initialized(b, location) or_return
+
+	if a.is_view || b.is_view{
+		logging.error( //TODO
+			.NotImplemented,
+			"BLAS-based matrix multiplication isn't supported for views, yet.",
+			location,
+		)
+		return 
+	}
+
+	m:= a.shape[Nd-2]
+	n:= a.shape[Nd-1]
+	k:= a.shape[Nd-1]
+
+	if k != b.shape[Nd-2] {
+		logging.error(
+			.ArguementError,
+			"Inner size of matrices is inconsistent.",
+			location,
+		)
+		return 
+	}
+
+	m_b:= cblas.blasint(m)
+	n_b:= cblas.blasint(n)
+	k_b:= cblas.blasint(k)
+
+	result_shape : [Nd]int
+	result_shape[Nd-2] = m
+	result_shape[Nd-1] = n
+
+	when Nd == 2 {
+		result = md.make_mdarray(T, result_shape, allocator, location) or_return
+	
+		cblas_matmul_wrapper(
+			a.buffer, b.buffer,
+			m_b, n_b, k_b,
+			result.buffer
+		)  	or_return
+
+	} else { // TODO: test this part
+		for d in 0..<Nd-2{
+			if a.shape[d] != b.shape[d]{
+				logging.error(
+					.ArguementError,
+					"Inconsistent shape for the stack of matrices provided",
+					location,
+				)
+				return
+			}
+			result_shape[d] = a.shape[d]
+		}
+
+		result = md.make_mdarray(T, result_shape, allocator, location) or_return
+		a_sig:= m*k
+		b_sig:= n*k
+		r_sig:= n*m
+
+		a_s: []T
+		b_s: []T
+		c_out: []T
+
+		m_b:= cblas.blasint(m)
+		n_b:= cblas.blasint(n)
+		k_b:= cblas.blasint(k)
+
+		for i in 0..<(md.size(result)/(r_sig)){
+			c_out = result.buffer[i*r_sig: i*r_sig+r_sig]
+			a_s = a.buffer[i*a_sig: i*a_sig+a_sig]
+			b_s = b.buffer[i*b_sig: i*b_sig+b_sig]
+
+			cblas_matmul_wrapper(
+				a_s, b_s,
+				m_b, n_b, k_b,
+				c_out
+			)  	or_return
+		}
+	}
 
 	return result, true
 }

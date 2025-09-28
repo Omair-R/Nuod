@@ -56,3 +56,5 @@ dkms.conf
 
 # testing main file
 main.odin
+vendors/openblas
+libopenblas.dll
