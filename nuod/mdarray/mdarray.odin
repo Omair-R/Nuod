@@ -524,6 +524,100 @@ broadcast_to :: proc(
 }
 
 
+broadcast_map :: proc(
+	a: MdArray($T, $Nd),
+	b: MdArray(T, Nd),
+	f: proc(T, T, ..$S) -> S,
+	args: ..S, 
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	result: MdArray(S, Nd),
+	ok:	bool,
+) where intrinsics.type_is_numeric(T)|| intrinsics.type_is_boolean(T),
+		intrinsics.type_is_numeric(S)|| intrinsics.type_is_boolean(S) #optional_ok
+{
+
+	result_shape: [Nd]int = broadcast_shape(a, b, location) or_return
+
+	result = make_mdarray(S, result_shape, allocator, location)
+
+	
+	for i in 0..<size(a){
+		buf_idx := move_through_strides(i, a.strides, result.strides)
+
+		result.buffer[buf_idx] = get_linear(a, i, location)
+		for d in 0..<Nd {
+			di := a.shape[d]
+			dj := result_shape[d]
+
+			if di != 1 || di == dj { continue }
+
+			for r in 1..<dj {
+				result.buffer[buf_idx + r * result.strides[d]] = get_linear(a, i, location)		
+			}
+		}
+	}
+	
+	
+	for i in 0..<size(b){
+		buf_idx := move_through_strides(i, b.strides, result.strides)
+
+		val := get_linear(b, i)
+		result.buffer[buf_idx] = f(result.buffer[buf_idx], val, ..args)
+		for d in 0..<Nd {
+			di := b.shape[d]
+			dj := result_shape[d]
+
+			if di != 1 || di == dj { continue }
+
+			for r in 1..<dj {
+				val_r := result.buffer[buf_idx + r * result.strides[d]]		
+				result.buffer[buf_idx + r * result.strides[d]] = f(val_r, val, ..args)		
+			}
+		}
+	}
+
+	return result, true
+}
+
+
+broadcast_shape :: proc(
+	a: MdArray($T, $Nd),
+	b: MdArray($S, Nd),
+	location := #caller_location,
+) -> (
+	result: [Nd]int,
+	ok:	bool,
+) where 
+	intrinsics.type_is_numeric(T)|| intrinsics.type_is_boolean(T),
+	intrinsics.type_is_numeric(S)|| intrinsics.type_is_boolean(S) #optional_ok {
+
+	validate_initialized(a, location) or_return
+	validate_initialized(b, location) or_return
+
+	for d in 0..<Nd {
+		da := a.shape[d]
+		db := b.shape[d]
+
+		if da==db || da == 1 {
+			result[d] = db
+			continue
+		}
+
+		if db == 1{
+			result[d] = da
+			continue
+		}
+
+		logging.error(.ArguementError, "Cannot broadcast to the provided shape.", location=location)
+		return
+	}
+
+	return result, true
+}
+
+
 stack :: proc(
 	$Nd: int,
 	mdarrays: []MdArray($T, Nd),
@@ -725,6 +819,40 @@ concat :: proc(
 			result.buffer[buf_idx] = get_linear(mdarrays[m], i, location)
 		}
 		axis_offset += mdarrays[m].shape[axis]
+	}
+
+	return result, true
+}
+
+
+where_cond :: proc(
+	mdarray: MdArray($T, $Nd),
+	where_array: MdArray(bool, Nd),
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	result: MdArray(T, 1),
+	ok:	bool,
+) where intrinsics.type_is_numeric(T)|| intrinsics.type_is_boolean(T) #optional_ok {
+
+	validate_initialized(mdarray, location) or_return
+	validate_initialized(where_array, location) or_return
+
+	validate_shape_match(mdarray, where_array, location) or_return
+
+	cnt:int
+	for i in 0..<size(where_array){
+		if get_linear(where_array, i) { cnt += 1}
+	}
+
+	result = make_mdarray(T, [1]int{cnt}, allocator, location) or_return
+
+	cnt = 0
+	for i in 0..<size(where_array){
+		if get_linear(where_array, i) {
+			result.buffer[cnt] = get_linear(mdarray, i)
+			cnt +=1
+		}
 	}
 
 	return result, true

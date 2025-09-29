@@ -20,7 +20,7 @@ element_wise_map :: proc(
 	validate_initialized(a, location) or_return
 	validate_initialized(b, location) or_return
 
-	validate_shape_match(a, b, location=location)
+	validate_shape_match(a, b, location=location) or_return
 	result = make_mdarray(T, a.shape, allocator, location) or_return
 
 	for i in 0 ..< size(a) {
