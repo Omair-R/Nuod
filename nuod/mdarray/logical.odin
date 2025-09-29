@@ -5,9 +5,9 @@ import "core:math"
 
 
 @(private="file")
-inner_logical_and :: #force_inline proc (a: bool, b: bool) -> bool { return a && b}
+inner_logical_and :: #force_inline proc (a: bool, b: bool, args:..bool) -> bool { return a && b}
 @(private="file")
-inner_logical_or :: #force_inline proc (a: bool, b: bool) -> bool { return a || b}
+inner_logical_or :: #force_inline proc (a: bool, b: bool, args:..bool) -> bool { return a || b}
 
 
 
@@ -20,7 +20,7 @@ logical_and_arrays :: proc(
 	 result:MdArray(bool, Nd),
 	 ok:bool,
 ) #optional_ok {
-	return element_wise_map(a, b, inner_logical_and, allocator, location)
+	return element_wise_map(a, b, inner_logical_and, allocator=allocator, location=location)
 }
 
 
@@ -33,7 +33,7 @@ logical_and_arrays_scalar :: proc(
 	 result:MdArray(bool, Nd),
 	 ok:bool,
 ) #optional_ok {
-	return scalar_map(a, b, inner_logical_and, false, allocator, location)
+	return scalar_map(a, b, inner_logical_and, flip=false, allocator=allocator, location=location)
 }
 
 
@@ -46,7 +46,7 @@ logical_and_scalar_array :: proc(
 	 result:MdArray(bool, Nd),
 	 ok:bool,
 ) #optional_ok {
-	return scalar_map(b, a, inner_logical_and, true, allocator, location)
+	return scalar_map(b, a, inner_logical_and, flip=true, allocator=allocator, location=location)
 }
 
 
@@ -59,7 +59,7 @@ logical_or_arrays :: proc(
 	 result:MdArray(bool, Nd),
 	 ok:bool,
 ) #optional_ok {
-	return element_wise_map(a, b, inner_logical_or, allocator, location)
+	return element_wise_map(a, b, inner_logical_or, allocator=allocator, location=location)
 }
 
 
@@ -72,7 +72,7 @@ logical_or_arrays_scalar :: proc(
 	 result:MdArray(bool, Nd),
 	 ok:bool,
 ) #optional_ok {
-	return scalar_map(a, b, inner_logical_or, false, allocator, location)
+	return scalar_map(a, b, inner_logical_or, flip=false, allocator=allocator, location=location)
 }
 
 
@@ -85,7 +85,7 @@ logical_or_scalar_array :: proc(
 	 result:MdArray(bool, Nd),
 	 ok:bool,
 ) #optional_ok {
-	return scalar_map(b, a, inner_logical_or, true, allocator, location)
+	return scalar_map(b, a, inner_logical_or, flip=true, allocator=allocator, location=location)
 }
 
 

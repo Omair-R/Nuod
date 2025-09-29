@@ -66,3 +66,14 @@ validate_pos_within_shape :: proc(pos: [$Nd]int, shape: [Nd]int, location:=#call
 	return true
 }
 
+
+validate_shape_match :: proc(a: MdArray($T, $Nd), b: MdArray(T, Nd), location:=#caller_location) -> bool {
+	for d in 0..<Nd{
+		if a.shape[d] != b.shape[d]{
+			logging.error(.ArguementError, "Mismatched dimensions are not allowed.", location=location)
+			return false
+		}
+	}
+
+	return true
+}

@@ -4,28 +4,28 @@ import "base:intrinsics"
 
 
 @(private="file")
-inner_bitwise_and :: #force_inline proc($T: typeid)-> proc(T, T)->T{
-	return #force_inline proc (a: T, b: T) -> T { return a & b}
+inner_bitwise_and :: #force_inline proc($T: typeid)-> proc(T, T, ..T)->T{
+	return #force_inline proc (a: T, b: T, args: ..T) -> T { return a & b}
 }
 @(private="file")
-inner_bitwise_or :: #force_inline proc($T: typeid)-> proc(T, T)->T{
-	return #force_inline proc (a: T, b: T) -> T { return a | b}
+inner_bitwise_or :: #force_inline proc($T: typeid)-> proc(T, T, ..T)->T{
+	return #force_inline proc (a: T, b: T, args: ..T) -> T { return a | b}
 }
 @(private="file")
-inner_bitwise_xor :: #force_inline proc($T: typeid)-> proc(T, T)->T{
-	return #force_inline proc (a: T, b: T) -> T { return a ~ b}
+inner_bitwise_xor :: #force_inline proc($T: typeid)-> proc(T, T, ..T)->T{
+	return #force_inline proc (a: T, b: T, args: ..T) -> T { return a ~ b}
 }
 @(private="file")
-inner_bitwise_andnot :: #force_inline proc($T: typeid)-> proc(T, T)->T{
-	return #force_inline proc (a: T, b: T) -> T { return a &~ b}
+inner_bitwise_andnot :: #force_inline proc($T: typeid)-> proc(T, T, ..T)->T{
+	return #force_inline proc (a: T, b: T, args: ..T) -> T { return a &~ b}
 }
 @(private="file")
-inner_left_shift :: #force_inline proc($T: typeid)-> proc(T, T)->T{
-	return #force_inline proc (a: T, b: T) -> T { return a &~ b}
+inner_left_shift :: #force_inline proc($T: typeid)-> proc(T, T, ..T)->T{
+	return #force_inline proc (a: T, b: T, args: ..T) -> T { return a &~ b}
 }
 @(private="file")
-inner_right_shift :: #force_inline proc($T: typeid)-> proc(T, T)->T{
-	return #force_inline proc (a: T, b: T) -> T { return a &~ b}
+inner_right_shift :: #force_inline proc($T: typeid)-> proc(T, T, ..T)->T{
+	return #force_inline proc (a: T, b: T, args: ..T) -> T { return a &~ b}
 }
 @(private="file")
 inner_bitwise_comp :: #force_inline proc($T: typeid)-> (proc(^T)) where intrinsics.type_is_numeric(T) {
@@ -43,7 +43,7 @@ bitwise_and_arrays :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_integer(T) #optional_ok {
-	return element_wise_map(a, b, inner_bitwise_and(T), allocator, location)
+	return element_wise_map(a, b, inner_bitwise_and(T), allocator=allocator, location=location)
 }
 
 
@@ -56,7 +56,7 @@ bitwise_and_arrays_scalar :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(a, b, inner_bitwise_and(T), false, allocator, location)
+	return scalar_map(a, b, inner_bitwise_and(T), flip=false, allocator=allocator, location=location)
 }
 
 
@@ -69,7 +69,7 @@ bitwise_and_scalar_array :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(b, a, inner_bitwise_and(T), true, allocator, location)
+	return scalar_map(b, a, inner_bitwise_and(T), flip=true, allocator=allocator, location=location)
 }
 
 
@@ -82,7 +82,7 @@ bitwise_or_arrays :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_integer(T) #optional_ok {
-	return element_wise_map(a, b, inner_bitwise_or(T), allocator, location)
+	return element_wise_map(a, b, inner_bitwise_or(T), allocator=allocator, location=location)
 }
 
 
@@ -95,7 +95,7 @@ bitwise_or_arrays_scalar :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(a, b, inner_bitwise_or(T), false, allocator, location)
+	return scalar_map(a, b, inner_bitwise_or(T), flip=false, allocator=allocator, location=location)
 }
 
 
@@ -108,7 +108,7 @@ bitwise_or_scalar_array :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(b, a, inner_bitwise_or(T), true, allocator, location)
+	return scalar_map(b, a, inner_bitwise_or(T), flip=true, allocator=allocator, location=location)
 }
 
 
@@ -121,7 +121,7 @@ bitwise_xor_arrays :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_integer(T) #optional_ok {
-	return element_wise_map(a, b, inner_bitwise_xor(T), allocator, location)
+	return element_wise_map(a, b, inner_bitwise_xor(T), allocator=allocator, location=location)
 }
 
 
@@ -134,7 +134,7 @@ bitwise_xor_arrays_scalar :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(a, b, inner_bitwise_xor(T), false, allocator, location)
+	return scalar_map(a, b, inner_bitwise_xor(T), flip=false, allocator=allocator, location=location)
 }
 
 
@@ -147,7 +147,7 @@ bitwise_xor_scalar_array :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(b, a, inner_bitwise_xor(T), true, allocator, location)
+	return scalar_map(b, a, inner_bitwise_xor(T), flip=true, allocator=allocator, location=location)
 }
 
 
@@ -160,7 +160,7 @@ bitwise_andnot_arrays :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_integer(T) #optional_ok {
-	return element_wise_map(a, b, inner_bitwise_andnot(T), allocator, location)
+	return element_wise_map(a, b, inner_bitwise_andnot(T), allocator=allocator, location=location)
 }
 
 
@@ -173,7 +173,7 @@ bitwise_andnot_arrays_scalar :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(a, b, inner_bitwise_andnot(T), false, allocator, location)
+	return scalar_map(a, b, inner_bitwise_andnot(T), flip=false, allocator=allocator, location=location)
 }
 
 
@@ -186,7 +186,7 @@ bitwise_andnot_scalar_array :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(b, a, inner_bitwise_andnot(T), true, allocator, location)
+	return scalar_map(b, a, inner_bitwise_andnot(T), flip=true, allocator=allocator, location=location)
 }
 
 
@@ -199,7 +199,7 @@ left_shift_arrays :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_integer(T) #optional_ok {
-	return element_wise_map(a, b, inner_left_shift(T), allocator, location)
+	return element_wise_map(a, b, inner_left_shift(T), allocator=allocator, location=location)
 }
 
 
@@ -212,7 +212,7 @@ left_shift_arrays_scalar :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(a, b, inner_left_shift(T), false, allocator, location)
+	return scalar_map(a, b, inner_left_shift(T), flip=false, allocator=allocator, location=location)
 }
 
 
@@ -225,7 +225,7 @@ left_shift_scalar_array :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(b, a, inner_left_shift(T), true, allocator, location)
+	return scalar_map(b, a, inner_left_shift(T), flip=true, allocator=allocator, location=location)
 }
 
 
@@ -238,7 +238,7 @@ right_shift_arrays :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_integer(T) #optional_ok {
-	return element_wise_map(a, b, inner_right_shift(T), allocator, location)
+	return element_wise_map(a, b, inner_right_shift(T), allocator=allocator, location=location)
 }
 
 
@@ -251,7 +251,7 @@ right_shift_arrays_scalar :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(a, b, inner_right_shift(T), false, allocator, location)
+	return scalar_map(a, b, inner_right_shift(T), flip=false, allocator=allocator, location=location)
 }
 
 
@@ -264,7 +264,7 @@ right_shift_scalar_array :: proc(
 	 result:MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	return scalar_map(b, a, inner_right_shift(T), true, allocator, location)
+	return scalar_map(b, a, inner_right_shift(T), flip=true, allocator=allocator, location=location)
 }
 
 
