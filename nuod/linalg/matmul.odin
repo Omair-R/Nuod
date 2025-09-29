@@ -19,6 +19,13 @@ inner_product :: proc(
 	md.validate_initialized(a, location) or_return
 	md.validate_initialized(b, location) or_return
 
+	when T == f32 || T == f64 {
+		if !a.is_view && !b.is_view {
+			result = cblas_dot_wrapper(a.buffer, b.buffer) or_return
+			return result, true
+		}
+	}
+
 	if a.shape != b.shape{
 		logging.error(.ArguementError, "the length of the vectors should be equal.", location)
 	}

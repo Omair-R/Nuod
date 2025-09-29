@@ -136,7 +136,7 @@ fills :: proc(
 
 	validate_positive_shape(shape, location=location) or_return
 	
-	mdarray = make_mdarray(T, shape, allocator) or_return
+	mdarray = make_mdarray(T, shape, allocator, location) or_return
 
 	for i in 0 ..< len(mdarray.buffer) {
 		mdarray.buffer[i] = value
@@ -213,6 +213,62 @@ ones_like :: proc(
 ) where intrinsics.type_is_numeric(T) #optional_ok {
 	mdarray, ok = fills(cast(T)1, source.shape, allocator, location = location)
 	return 
+}
+
+
+from_range :: proc(
+	$T: typeid,
+	end: int,
+	begin:= 0,
+	step:= 1,	
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	mdarray: MdArray(T, 1),
+	ok: bool,
+) where intrinsics.type_is_numeric(T) #optional_ok {
+
+	md_size := (end - begin)/step
+	md_size += ((end - begin)%step) == 0? 0 : 1
+	
+	mdarray = make_mdarray(T, [1]int{md_size}, allocator, location) or_return
+
+	i:=0
+	curr_val := begin
+	for curr_val < end {
+		mdarray.buffer[i] = cast(T)curr_val
+
+		curr_val+=step
+		i+=1
+	}
+
+	return mdarray, true
+}
+
+
+reshaped_range :: proc(
+	$T: typeid,
+	shape: [$Nd]int,
+	begin:= 0,
+	step:= 1,	
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	mdarray: MdArray(T, Nd),
+	ok: bool,
+) where intrinsics.type_is_numeric(T) #optional_ok {
+
+	validate_positive_shape(shape, location=location) or_return
+
+	mdarray = make_mdarray(T, shape, allocator, location) or_return
+
+	curr_val := begin
+	for i in 0..<size(mdarray) {
+		mdarray.buffer[i] = cast(T)curr_val
+		curr_val+=step
+	}
+
+	return mdarray, true
 }
 
 

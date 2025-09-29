@@ -3,8 +3,51 @@ import cblas "../cblas"
 import "base:intrinsics"
 
 
+cblas_dot_wrapper :: proc (x: []$T, y: []T) -> (
+	result: T,
+	ok: bool,
+) where intrinsics.type_is_float(T) #optional_ok
+{
+	when ODIN_DEBUG {
+		if len(x) != len(y) {
+			logging.error(
+				.ArguementError,
+				"Vectors sizes are miss matched.",
+				location = location,
+			)
+			return 
+		}
+	}
 
-cblas_matmul_wrapper :: proc (a: []$T, b: []T, m, n, k: cblas.blasint, c_out: []T, transpose_a:=false, transpose_b:=false) -> (
+	when T == f32{
+		result = cblas.sdot(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+			raw_data(y),
+			cblas.blasint(1),
+		)
+	} else when T == f64{
+		result = cblas.ddot(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+			raw_data(y),
+			cblas.blasint(1),
+		)
+	}
+
+	return result, true
+}
+	
+
+cblas_matmul_wrapper :: proc (
+	a: []$T, b: []T,
+	m, n, k: cblas.blasint,
+	c_out: []T,
+	transpose_a:=false,
+	transpose_b:=false
+) -> (
 	ok: bool
 ) where intrinsics.type_is_float(T) 
 {
