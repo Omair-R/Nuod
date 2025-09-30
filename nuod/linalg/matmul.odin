@@ -18,16 +18,13 @@ inner_product :: proc(
 
 	md.validate_initialized(a, location) or_return
 	md.validate_initialized(b, location) or_return
+	md.validate_shape_match(a, b, location) or_return
 
 	when T == f32 || T == f64 {
 		if !a.is_view && !b.is_view {
 			result = cblas_dot_wrapper(a.buffer, b.buffer) or_return
 			return result, true
 		}
-	}
-
-	if a.shape != b.shape{
-		logging.error(.ArguementError, "the length of the vectors should be equal.", location)
 	}
 
 	for i in 0..<md.size(a){
@@ -62,6 +59,7 @@ outer_product :: proc(
 	return result, true
 }
 
+
 kron_vector_product :: proc(	
 	a: md.MdArray($T, 1),
 	b: md.MdArray(T, 1),
@@ -91,6 +89,10 @@ matmul :: proc(
 	 result:md.MdArray(T, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T), Nd>=2 #optional_ok {
+
+	when T == f32 || T == f64{
+		return cblas_matmul(a, b, allocator, location)
+	}
 
 	md.validate_initialized(a, location) or_return
 	md.validate_initialized(b, location) or_return
@@ -134,7 +136,7 @@ matmul :: proc(
 }
 
 
-// The name is temp.
+@(private="file")
 cblas_matmul :: proc(	
 	a: md.MdArray($T, $Nd),
 	b: md.MdArray(T, Nd),
@@ -228,3 +230,111 @@ cblas_matmul :: proc(
 
 	return result, true
 }
+
+
+matvec_stacked :: proc(	
+	a: md.MdArray($T, $Nd),
+	v: md.MdArray(T, $Md),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 result:md.MdArray(T, Md),
+	 ok:bool,
+) where intrinsics.type_is_numeric(T), (Nd-1)==Md #optional_ok {
+
+	md.validate_initialized(a, location) or_return
+	md.validate_initialized(v, location) or_return
+
+	if a.is_view || v.is_view{
+		logging.error( //TODO
+			.NotImplemented,
+			"BLAS-based matrix multiplication isn't supported for views, yet.",
+			location,
+		)
+		return 
+	}
+
+	m := a.shape[Nd-2]
+	n := a.shape[Nd-1]
+
+	if (v.shape[Md-1] != n){
+		logging.error(
+			.ArguementError,
+			"Inconsistance shape with the length of provided arrays.",
+			location = location,
+		)
+		return 
+	}
+	
+	result_shape : [Md]int
+	result_shape[Md-1] = m
+
+	when Md != 1 do for d in 0..<Md-1 {
+		if a.shape[d] != v.shape[d]{
+			logging.error(
+				.ArguementError,
+				"Inconsistent shape for the stack of matrices provided",
+				location,
+			)
+			return
+		}
+		result_shape[d] = v.shape[d]
+	}  
+	
+	result = md.make_mdarray(T, result_shape, allocator, location) or_return
+
+	when T == f32 || T == f64 {
+		when Nd == 2 {
+			cblas_matvec(
+				a.buffer,
+				v.buffer,
+				cblas.blasint(m),
+				cblas.blasint(n),
+				result.buffer,
+				transpose_a = false,
+			) or_return
+			return result, true
+		}
+
+		a_sig:= m*n
+		v_sig:= n
+		r_sig:= m
+
+		a_s: []T
+		v_s: []T
+		w_out: []T
+
+		m_b:= cblas.blasint(m)
+		n_b:= cblas.blasint(n)
+
+		for i in 0..<(md.size(result)/r_sig){
+				w_out = result.buffer[i*r_sig: i*r_sig+r_sig]
+				a_s = a.buffer[i*a_sig: i*a_sig+a_sig]
+				v_s = v.buffer[i*v_sig: i*v_sig+v_sig]
+
+				cblas_matvec(
+					a_s,
+					v_s,
+					m_b, n_b,
+					w_out,
+					transpose_a = false,
+				) or_return
+		}
+
+		return result, true
+	}
+
+	//TODO: temp + test this bit 
+	f:: proc(a :T, b: T, args: ..T) -> T { return a * b }
+
+	v_r := md.expand_dim_view(Md, v, axis=Md-1, location=location) or_return
+
+	mul_inter:= md.broadcast_map(a , v_r, f, allocator=allocator, location=location)
+	defer md.free_mdarray(mul_inter)
+		
+	result = md.dim_reduce_sum(Nd, mul_inter, Nd-1, allocator=allocator, location=location) or_return 
+
+	return result, true
+}
+
+

@@ -443,8 +443,8 @@ reshape_copy :: proc(
 
 	validate_initialized(mdarray, location) or_return
 
-	temp_view := reshape_view(mdarray, shape) or_return
-	result = make_mdarray(T, temp_view.shape, allocator) or_return
+	temp_view := reshape_view(mdarray, shape, location) or_return
+	result = make_mdarray(T, temp_view.shape, allocator, location) or_return
 
 	if mdarray.is_view{
 		for i in 0..<size(result){
@@ -454,6 +454,69 @@ reshape_copy :: proc(
 		copy(result.buffer, mdarray.buffer)
 	}
 
+	return result, true
+}
+
+
+expand_dim_view :: proc(
+	$Nd: int,
+	mdarray: MdArray($T, Nd),
+	axis:int,
+	location := #caller_location,
+) -> (
+	result:MdArray(T, Nd+1),
+	ok:bool,
+) where intrinsics.type_is_numeric(T) || intrinsics.type_is_boolean(T) #optional_ok {
+
+	validate_initialized(mdarray, location) or_return
+	if axis > Nd {
+		logging.error(
+			.ArguementError,
+			"Provided axis cannot be larger than the dimensions of the array",
+			location
+		)
+		return
+	}
+
+	new_shape := [Nd+1]int{}
+	new_shape[axis] = 1
+	offset:=0
+	for d in 0..<Nd{
+		if d == axis do offset = 1
+		new_shape[d+offset] = mdarray.shape[d]
+	}
+
+	
+	result = MdArray(T, Nd+1) {
+			buffer = mdarray.buffer,
+			shape = new_shape,
+			strides = compute_strides(new_shape),
+			is_view=true,
+			offset = mdarray.offset,
+		}
+
+	result.shape_strides = result.strides
+	return result, true
+}
+
+
+expand_dim_copy :: proc(
+	$Nd: int,
+	mdarray: MdArray($T, Nd),
+	axis:int,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	result:MdArray(T, Nd+1),
+	ok:bool,
+) where intrinsics.type_is_numeric(T) || intrinsics.type_is_boolean(T) #optional_ok {
+
+	validate_initialized(mdarray, location) or_return
+
+	temp_view := expand_dim_view(mdarray, shape, axis, location) or_return
+
+	result = copy_array(temp_view, allocator, location) or_return
+	
 	return result, true
 }
 

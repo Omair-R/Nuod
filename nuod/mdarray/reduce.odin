@@ -97,7 +97,10 @@ inner_max :: #force_inline proc($T: typeid)-> proc(T, T,..T)->T{
 inner_min :: #force_inline proc($T: typeid)-> proc(T, T,..T)->T{
 	return #force_inline proc (accum: T, val: T, args: ..T) -> T { return math.min(accum, val)}
 }
-
+@(private="file")
+inner_avg :: #force_inline proc($T: typeid)-> proc(T, T,..T)->T{
+	return #force_inline proc (accum: T, val: T, args: ..T) -> T { return accum + (val/args[0])}
+}
 
 all_reduce_sum_no_init :: proc(	
 	mdarray: MdArray($T, $Nd),
@@ -262,3 +265,15 @@ dim_reduce_max :: proc(
 	return dim_reduce_map(Nd, mdarray, axis, inner_max(T), initial, allocator=allocator, location=location)
 }
 
+
+dim_reduce_avg :: proc(
+	$Nd :int,
+	mdarray: MdArray($T, Nd),
+	axis:int,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	accum:MdArray(T, Nd-1), ok:bool
+) where intrinsics.type_is_numeric(T) #optional_ok {
+	return dim_reduce_map(Nd, mdarray, axis, inner_avg(T), cast(T)0, cast(T)mdarray.shape[axis], allocator=allocator, location=location)
+}
