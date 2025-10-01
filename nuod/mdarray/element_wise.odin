@@ -7,12 +7,12 @@ import "core:math"
 element_wise_map :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
-	f: proc(_: T, _: T, _: ..$S) -> S,
+	f: proc(_: T, _: T, _: ..$S) -> $R,
 	args: ..S,
 	allocator := context.allocator,
 	location := #caller_location,
 ) -> (
-	result: MdArray(S, Nd),
+	result: MdArray(R, Nd),
 	ok: bool,
 ) where intrinsics.type_is_numeric(T) ||
 	intrinsics.type_is_boolean(T) {
@@ -21,7 +21,7 @@ element_wise_map :: proc(
 	validate_initialized(b, location) or_return
 
 	validate_shape_match(a, b, location=location) or_return
-	result = make_mdarray(T, a.shape, allocator, location) or_return
+	result = make_mdarray(R, a.shape, allocator, location) or_return
 
 	for i in 0 ..< size(a) {
 		result.buffer[i] = f(get_linear(a, i), get_linear(b, i), ..args)
@@ -33,20 +33,20 @@ element_wise_map :: proc(
 scalar_map :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
-	f: proc(_: T, _: T, _:..$S) -> S,
+	f: proc(_: T, _: T, _:..$S) -> $R,
 	args: ..S,
 	flip := false,
 	allocator := context.allocator,
 	location := #caller_location,
 ) -> (
-	result: MdArray(S, Nd),
+	result: MdArray(R, Nd),
 	ok: bool,
 ) where intrinsics.type_is_numeric(T) ||
 	intrinsics.type_is_boolean(T) {
 
 	validate_initialized(a, location) or_return
 
-	result = make_mdarray(S, a.shape, allocator, location) or_return
+	result = make_mdarray(R, a.shape, allocator, location) or_return
 
 	if flip {
 		for i in 0 ..< size(a) {

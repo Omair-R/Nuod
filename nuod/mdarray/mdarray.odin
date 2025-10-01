@@ -216,6 +216,21 @@ ones_like :: proc(
 }
 
 
+
+@(private="file")
+inner_range :: proc(
+	buffer: []$T,
+	begin, step: T,
+	size:int,
+) {
+	curr_val := begin
+	for i in 0..< size {
+		buffer[i] = curr_val
+		curr_val+=step
+	}
+}
+
+
 from_range :: proc(
 	$T: typeid,
 	end: int,
@@ -233,15 +248,7 @@ from_range :: proc(
 	
 	mdarray = make_mdarray(T, [1]int{md_size}, allocator, location) or_return
 
-	i:=0
-	curr_val := begin
-	for curr_val < end {
-		mdarray.buffer[i] = cast(T)curr_val
-
-		curr_val+=step
-		i+=1
-	}
-
+	inner_range(mdarray.buffer, T(begin), T(step), size(mdarray))
 	return mdarray, true
 }
 
@@ -262,12 +269,62 @@ reshaped_range :: proc(
 
 	mdarray = make_mdarray(T, shape, allocator, location) or_return
 
+	inner_range(mdarray.buffer, T(begin), T(step), size(mdarray))
+	return mdarray, true
+}
+
+
+@(private="file")
+get_step :: #force_inline proc "contextless"(begin, end:$T, n: int, endpoint:bool) -> T {
+	denom := endpoint? T(n)-1 : T(n)
+	return (end - begin)/denom
+}
+
+
+linspace :: proc(
+	$T: typeid,
+	begin: T,
+	end: T,
+	n: int,
+	endpoint:=true, 
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	mdarray: MdArray(T, 1),
+	ok: bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) #optional_ok {
+	step := get_step(begin, end, n, endpoint)
+	
+	mdarray = make_mdarray(T, [1]int{n}, allocator, location) or_return
+
+	inner_range(mdarray.buffer, T(begin), T(step), size(mdarray))
+	return mdarray, true
+}
+
+
+logspace :: proc(
+	$T: typeid,
+	begin: T,
+	end: T,
+	n: int,
+	base:f64=10.0,
+	endpoint:=true, 
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	mdarray: MdArray(T, 1),
+	ok: bool,
+) where intrinsics.type_is_float(T) #optional_ok {
+	step := get_step(begin, end, n, endpoint)
+	
+	mdarray = make_mdarray(T, [1]int{n}, allocator, location) or_return
+
 	curr_val := begin
-	for i in 0..<size(mdarray) {
-		mdarray.buffer[i] = cast(T)curr_val
+	t_base := cast(T)base
+	for i in 0..< size(mdarray) {
+		mdarray.buffer[i] = math.pow(t_base, curr_val)
 		curr_val+=step
 	}
-
 	return mdarray, true
 }
 
@@ -307,6 +364,19 @@ eye :: proc(
 	}
 
 	return mdarray, true
+}
+
+
+identity :: proc(
+	$T: typeid,
+	n: u64,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	mdarray: MdArray(T, 2),
+	ok: bool,
+) where intrinsics.type_is_numeric(T) #optional_ok {
+	return eye(T, n, n, diag_idx=0, allocator=allocator, location=location)
 }
 
 

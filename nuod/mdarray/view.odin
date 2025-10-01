@@ -120,7 +120,7 @@ get :: proc(
 ) -> (
 	val: T,
 	ok: bool,
-){	
+) #optional_ok {	
 
 	validate_initialized(mdarray, location) or_return
 
@@ -140,7 +140,7 @@ get_ref :: proc(
 ) -> (
 	val: ^T,
 	ok: bool,
-){	
+) #optional_ok {	
 
 	validate_initialized(mdarray, location) or_return
 
