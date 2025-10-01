@@ -160,7 +160,7 @@ cblas_matmul :: proc(
 	}
 
 	m:= a.shape[Nd-2]
-	n:= a.shape[Nd-1]
+	n:= b.shape[Nd-1]
 	k:= a.shape[Nd-1]
 
 	if k != b.shape[Nd-2] {
@@ -182,14 +182,14 @@ cblas_matmul :: proc(
 
 	when Nd == 2 {
 		result = md.make_mdarray(T, result_shape, allocator, location) or_return
-	
+		fmt.println("shape:", result_shape)	
 		cblas_matmul_wrapper(
 			a.buffer, b.buffer,
 			m_b, n_b, k_b,
 			result.buffer
 		)  	or_return
 
-	} else { // TODO: test this part
+	} else { 
 		for d in 0..<Nd-2{
 			if a.shape[d] != b.shape[d]{
 				logging.error(
@@ -210,10 +210,6 @@ cblas_matmul :: proc(
 		a_s: []T
 		b_s: []T
 		c_out: []T
-
-		m_b:= cblas.blasint(m)
-		n_b:= cblas.blasint(n)
-		k_b:= cblas.blasint(k)
 
 		for i in 0..<(md.size(result)/(r_sig)){
 			c_out = result.buffer[i*r_sig: i*r_sig+r_sig]
@@ -324,7 +320,6 @@ matvec_stacked :: proc(
 		return result, true
 	}
 
-	//TODO: temp + test this bit 
 	f:: proc(a :T, b: T, args: ..T) -> T { return a * b }
 
 	v_r := md.expand_dim_view(Md, v, axis=Md-1, location=location) or_return
