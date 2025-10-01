@@ -81,6 +81,44 @@ dim_reduce_map :: proc(
 }
 
 
+keepdim_reduce_map :: proc(
+	$Nd: int,
+	mdarray: MdArray($T, Nd),
+	axis:int,
+	f: proc(T, T, ..T) -> T,
+	initial:T,
+	args: ..T,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	result:MdArray(T, Nd),
+	ok:bool
+) where intrinsics.type_is_numeric(T) || intrinsics.type_is_boolean(T) #optional_ok {
+	
+	validate_initialized(mdarray, location=location) or_return
+
+	result_shape := mdarray.shape
+	result_shape[axis] = 1
+
+	result = make_mdarray(T, result_shape, allocator=allocator, location=location) or_return
+
+	nd_idx:[Nd]int
+	reduced_idx:[Nd]int
+	bf_idx:int
+	for i in 0..<size(result){
+		reduced_idx = from_buffer_index(result, i, location=location) or_return
+		result.buffer[i] = initial
+		for j in 0..<(mdarray.shape[axis]){
+			reduced_idx[axis] = j
+			bf_idx = to_buffer_index(mdarray, reduced_idx, location=location) or_return
+			result.buffer[i] = f(result.buffer[i], mdarray.buffer[bf_idx], ..args)
+		}
+	}
+
+	return result, true
+}
+
+
 @(private="file")
 inner_sum :: #force_inline  proc($T: typeid)-> proc(T, T,..T)->T{
 	return #force_inline proc (accum: T, val: T, args: ..T) -> T { return accum + val}
@@ -276,4 +314,97 @@ dim_reduce_avg :: proc(
 	accum:MdArray(T, Nd-1), ok:bool
 ) where intrinsics.type_is_numeric(T) #optional_ok {
 	return dim_reduce_map(Nd, mdarray, axis, inner_avg(T), cast(T)0, cast(T)mdarray.shape[axis], allocator=allocator, location=location)
+}
+
+
+keepdim_reduce_sum_no_init :: proc(
+	mdarray: MdArray($T, $Nd),
+	axis:int,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	accum:MdArray(T, Nd), ok:bool
+) where intrinsics.type_is_numeric(T) #optional_ok {
+	return keepdim_reduce_map(Nd, mdarray, axis, inner_sum(T), cast(T)0, allocator=allocator, location=location)
+}
+
+
+keepdim_reduce_sum_with_init :: proc(
+	mdarray: MdArray($T, $Nd),
+	axis:int,
+	initial:T,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	accum:MdArray(T, Nd), ok:bool
+) where intrinsics.type_is_numeric(T) #optional_ok {
+	return keepdim_reduce_map(Nd, mdarray, axis, inner_sum(T), cast(T)initial, allocator=allocator, location=location)
+}
+
+keepdim_reduce_sum :: proc{keepdim_reduce_sum_no_init, keepdim_reduce_sum_with_init}
+
+
+keepdim_reduce_prod_no_init :: proc(
+	mdarray: MdArray($T, $Nd),
+	axis:int,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	accum:MdArray(T, Nd), ok:bool
+) where intrinsics.type_is_numeric(T) #optional_ok {
+	return keepdim_reduce_map(Nd, mdarray, axis, inner_prod(T), cast(T)1, allocator=allocator, location=location)
+}
+
+
+keepdim_reduce_prod_with_init :: proc(
+	mdarray: MdArray($T, $Nd),
+	axis:int,
+	initial:T,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	accum:MdArray(T, Nd), ok:bool
+) where intrinsics.type_is_numeric(T) #optional_ok {
+	return dim_reduce_map(Nd, mdarray, axis, inner_prod(T), cast(T)initial, allocator=allocator, location=location)
+}
+
+keepdim_reduce_prod :: proc{keepdim_reduce_prod_no_init, keepdim_reduce_prod_with_init}
+
+
+
+keepdim_reduce_min :: proc(
+	mdarray: MdArray($T, $Nd),
+	axis:int,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	accum:MdArray(T, Nd), ok:bool
+) where intrinsics.type_is_numeric(T) #optional_ok {
+	initial := max(T)
+	return keepdim_reduce_map(Nd, mdarray, axis, inner_min(T), initial, allocator=allocator, location=location)
+}
+
+
+keepdim_reduce_max :: proc(
+	mdarray: MdArray($T, $Nd),
+	axis:int,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	accum:MdArray(T, Nd), ok:bool
+) where intrinsics.type_is_numeric(T) #optional_ok {
+	initial := min(T)
+	return keepdim_reduce_map(Nd, mdarray, axis, inner_max(T), initial, allocator=allocator, location=location)
+}
+
+
+keepdim_reduce_avg :: proc(
+	mdarray: MdArray($T, $Nd),
+	axis:int,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	accum:MdArray(T, Nd), ok:bool
+) where intrinsics.type_is_numeric(T) #optional_ok {
+	return keepdim_reduce_map(Nd, mdarray, axis, inner_avg(T), cast(T)0, cast(T)mdarray.shape[axis], allocator=allocator, location=location)
 }
