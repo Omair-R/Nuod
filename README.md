@@ -42,7 +42,7 @@ main :: proc () {
 	trans_matrix := md.transpose_copy(first_matrix)
 
   // perform matrix multiplication on the two matrices.
-	inner_product := ml.matmul(first_matrix, trans_matrix)
+	inner_product := ml.matmul(trans_matrix, first_matrix)
 
 	fmt.println("Inner product: ")
 	md.println(inner_product)
