@@ -41,7 +41,7 @@ ravel :: proc(mdarray: MdArray($T, $Nd)) -> []T {
 }
 
 get_type :: proc(mdarray: MdArray($T, $Nd)) -> typeid {
-	return type_of(T)
+	return T
 }
 
 is_none :: proc(mdarray: MdArray($T, $Nd)) -> bool {
@@ -148,7 +148,7 @@ fills :: proc(
 
 fills_like :: proc(
 	value: $T,
-	source: MdArray(T, $Nd),
+	source: MdArray($S, $Nd),
 	allocator := context.allocator,
 	location := #caller_location,
 ) -> (
@@ -176,7 +176,7 @@ zeros :: proc(
 
 zeros_like :: proc(
 	$T: typeid,
-	source: MdArray(T, $Nd),
+	source: MdArray($S, $Nd),
 	allocator := context.allocator,
 	location := #caller_location,
 ) -> (
@@ -204,7 +204,7 @@ ones :: proc(
 
 ones_like :: proc(
 	$T: typeid,
-	source: MdArray(T, $Nd),
+	source: MdArray($S, $Nd),
 	allocator := context.allocator,
 	location := #caller_location,
 ) -> (
@@ -469,7 +469,7 @@ reshape_view :: proc(
 				"Multiple -1 indices have been provided.",
 				location = location,
 			)
-			return {}, false
+			return
 		}
 	}
 
@@ -481,11 +481,23 @@ reshape_view :: proc(
 				"Inferring the size of the array is not possible with the provided shape.",
 				location = location,
 			)
-			return {}, false
+			return
 		}
 
 		shape[neg_axis] = size(mdarray) / new_size
 		new_size *= shape[neg_axis]
+	}
+
+	check_size := 1
+	for d in shape do check_size *= d
+
+	if size(mdarray) != check_size {
+		logging.error(
+			.ArguementError,
+			"The shape provided is inconsistant with the size of the array.",
+			location = location,
+		)
+		return
 	}
 
 	result = MdArray(T, Md) {
