@@ -14,15 +14,12 @@ outplace_unary_map :: proc(
 ) -> (
 	 result:MdArray(T, Nd),
 	 ok:bool,
-) where intrinsics.type_is_numeric(T) || intrinsics.type_is_boolean(T){
+) where intrinsics.type_is_numeric(T) || intrinsics.type_is_boolean(T) #optional_ok {
 	
 	result = copy_array(mdarray, allocator=allocator, location=location) or_return
 
-	for &val in result.buffer {
-		f(&val)
-	}
 	for i in 0..<size(mdarray){		
-		f(get_linear_ref(mdarray, i))
+		f(get_linear_ref(result, i))
 	}
 
 	return result, true
@@ -185,7 +182,7 @@ outplace_sign :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_numeric(T) {
+) where intrinsics.type_is_numeric(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_sign(T), allocator, location)
 }
 
@@ -207,7 +204,7 @@ outplace_neg :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_numeric(T) {
+) where intrinsics.type_is_numeric(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_neg(T), allocator, location)
 }
 
@@ -229,7 +226,7 @@ outplace_abs :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_numeric(T) {
+) where intrinsics.type_is_numeric(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_abs(T), allocator, location)
 }
 
@@ -252,7 +249,7 @@ outplace_sq :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_numeric(T) {
+) where intrinsics.type_is_numeric(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_sq(T), allocator, location)
 }
 
@@ -274,7 +271,7 @@ outplace_sqrt :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_sqrt(T), allocator, location)
 }
 
@@ -296,7 +293,7 @@ outplace_cbrt :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_cbrt(T), allocator, location)
 }
 
@@ -318,7 +315,7 @@ outplace_exp :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_exp(T), allocator, location)
 }
 
@@ -340,7 +337,7 @@ outplace_exp2 :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_exp2(T), allocator, location)
 }
 
@@ -362,7 +359,7 @@ outplace_ln :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_ln(T), allocator, location)
 }
 
@@ -384,7 +381,7 @@ outplace_log2 :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_log2(T), allocator, location)
 }
 
@@ -406,7 +403,7 @@ outplace_log10 :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_log10(T), allocator, location)
 }
 
@@ -428,7 +425,7 @@ outplace_log1p :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_log1p(T), allocator, location)
 }
 
@@ -450,7 +447,7 @@ outplace_reciprocal :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_numeric(T) {
+) where intrinsics.type_is_numeric(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_reciprocal(T), allocator, location)
 }
 
@@ -474,7 +471,7 @@ outplace_sin :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_sin(T), allocator, location)
 }
 
@@ -496,7 +493,7 @@ outplace_cos :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_cos(T), allocator, location)
 }
 
@@ -518,7 +515,7 @@ outplace_tan :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_tan(T), allocator, location)
 }
 
@@ -540,7 +537,7 @@ outplace_asin :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_asin(T), allocator, location)
 }
 
@@ -562,7 +559,7 @@ outplace_acos :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_acos(T), allocator, location)
 }
 
@@ -584,7 +581,7 @@ outplace_atan :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_atan(T), allocator, location)
 }
 
@@ -606,7 +603,7 @@ outplace_degrees :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_degrees(T), allocator, location)
 }
 
@@ -628,7 +625,7 @@ outplace_radians :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_radians(T), allocator, location)
 }
 
@@ -652,7 +649,7 @@ outplace_sinh :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_sinh(T), allocator, location)
 }
 
@@ -674,7 +671,7 @@ outplace_cosh :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_cosh(T), allocator, location)
 }
 
@@ -696,7 +693,7 @@ outplace_tanh :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_tanh(T), allocator, location)
 }
 
@@ -718,7 +715,7 @@ outplace_asinh :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_asinh(T), allocator, location)
 }
 
@@ -740,7 +737,7 @@ outplace_acosh :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_acosh(T), allocator, location)
 }
 
@@ -762,7 +759,7 @@ outplace_atanh :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_atanh(T), allocator, location)
 }
 
@@ -786,7 +783,7 @@ outplace_conj :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_complex(T) {
+) where intrinsics.type_is_complex(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_conj(T), allocator, location)
 }
 
@@ -808,7 +805,7 @@ outplace_sinc :: proc(
 ) -> (
 	result:MdArray(T, Nd),
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) #optional_ok {
 	return outplace_unary_map(mdarray, inner_sinc(T), allocator, location)
 }
 
