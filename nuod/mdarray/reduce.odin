@@ -214,7 +214,7 @@ all_reduce_avg :: proc(
 	accum:T, ok:bool
 ) where intrinsics.type_is_numeric(T) #optional_ok {
 	accum, ok = all_reduce_map(mdarray, inner_sum(T), cast(T)0, location=location)
-	return accum/size(mdarray), ok
+	return accum/T(size(mdarray)), ok
 }
 
 
