@@ -453,6 +453,14 @@ reshape_view :: proc(
 
 	validate_initialized(mdarray, location) or_return
 
+	if mdarray.is_view {
+		logging.error(
+			.NotImplemented,
+			"reshaping a view array is not supported yet.",
+			location
+		)
+	}
+
 	shape := shape
 	neg_axis := -1
 	new_size := 1
@@ -595,7 +603,7 @@ expand_dim_copy :: proc(
 
 	validate_initialized(mdarray, location) or_return
 
-	temp_view := expand_dim_view(mdarray, shape, axis, location) or_return
+	temp_view := expand_dim_view(Nd, mdarray, axis, location) or_return
 
 	result = copy_array(temp_view, allocator, location) or_return
 	
@@ -614,11 +622,14 @@ flatten_view :: proc(
 	validate_initialized(mdarray, location) or_return
 
 	if mdarray.is_view{
-		logging.warning("Not implemented yet.", location = location)
+		logging.error(
+			.NotImplemented,
+			"flattening a view is not supported yet.",
+			location)
 		return 
 	}
 
-	result = MdArray(T, Md) {
+	result = MdArray(T, 1) {
 			buffer = mdarray.buffer,
 			shape = [1]int{size(mdarray)},
 			strides = [1]int{1},
@@ -667,7 +678,7 @@ broadcast_to :: proc(
 	validate_initialized(mdarray, location) or_return
 
 	curr_shape :[Md]int
-	if Nd != Md{
+	when Nd != Md{
 		for &dim in curr_shape {dim = 1}
 		offset:= Md-Nd
 		for i in offset..<Md{
@@ -690,35 +701,27 @@ broadcast_to :: proc(
 		}
 	}
 
-	if sim_cnt == Md {		
-		logging.warning(
-			.OperationSkipped,
-			"provided shape is identical. The array has been returned unchanged.",
-			location = location
-		)
-		return mdarray, true
+	when Nd == Md {
+ 		if sim_cnt == Md {		
+			logging.warning(
+				.OperationSkipped,
+				"provided shape is identical. The array has been returned unchanged.",
+				location = location
+			)
+			return mdarray, true
+		}
 	}
 
 	result = make_mdarray(T, shape, allocator, location) or_return
 
-	adjusted_strides := compute_strides(curr_shape)
-	
-	for i in 0..<size(mdarray){
-		buf_idx := move_through_strides(i, adjusted_strides, result.strides)
-
-		result.buffer[buf_idx] = get_linear(mdarray, i, location)
+	reshaped_mdarr := reshape_view(mdarray, curr_shape, location) or_return
+	pos : [Md]int
+	for i in 0..<size(result){
+		pos = from_buffer_index(result, i, location) or_return
 		for d in 0..<Md {
-			di := curr_shape[d]
-			dj := shape[d]
-
-			if di != 1 || di == dj { continue }
-
-			repeat := dj
-
-			for r in 1..<repeat {
-				result.buffer[buf_idx + r * result.strides[d]] = get_linear(mdarray, i, location)		
-			}
+			if curr_shape[d] == 1 do pos[d] = 0
 		}
+		result.buffer[i] = get(reshaped_mdarr, pos, location)
 	}
 
 	return result, true
@@ -728,12 +731,12 @@ broadcast_to :: proc(
 broadcast_map :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
-	f: proc(T, T, ..$S) -> S,
+	f: proc(T, T, ..$S) -> $R,
 	args: ..S, 
 	allocator := context.allocator,
 	location := #caller_location,
 ) -> (
-	result: MdArray(S, Nd),
+	result: MdArray(R, Nd),
 	ok:	bool,
 ) where intrinsics.type_is_numeric(T)|| intrinsics.type_is_boolean(T),
 		intrinsics.type_is_numeric(S)|| intrinsics.type_is_boolean(S) #optional_ok
@@ -743,41 +746,21 @@ broadcast_map :: proc(
 
 	result = make_mdarray(S, result_shape, allocator, location)
 
-	
-	for i in 0..<size(a){
-		buf_idx := move_through_strides(i, a.strides, result.strides)
-
-		result.buffer[buf_idx] = get_linear(a, i, location)
+	a_pos : [Nd]int
+	b_pos : [Nd]int
+	a_val : T
+	b_val : T
+	for i in 0..<size(result){
+		a_pos = from_buffer_index(result, i, location) or_return
+		b_pos = a_pos
 		for d in 0..<Nd {
-			di := a.shape[d]
-			dj := result_shape[d]
-
-			if di != 1 || di == dj { continue }
-
-			for r in 1..<dj {
-				result.buffer[buf_idx + r * result.strides[d]] = get_linear(a, i, location)		
-			}
+			if a.shape[d] == 1 do a_pos[d] = 0
+			if b.shape[d] == 1 do b_pos[d] = 0
 		}
-	}
-	
-	
-	for i in 0..<size(b){
-		buf_idx := move_through_strides(i, b.strides, result.strides)
-
-		val := get_linear(b, i)
-		result.buffer[buf_idx] = f(result.buffer[buf_idx], val, ..args)
-		for d in 0..<Nd {
-			di := b.shape[d]
-			dj := result_shape[d]
-
-			if di != 1 || di == dj { continue }
-
-			for r in 1..<dj {
-				val_r := result.buffer[buf_idx + r * result.strides[d]]		
-				result.buffer[buf_idx + r * result.strides[d]] = f(val_r, val, ..args)		
-			}
-		}
-	}
+		a_val = get(a, a_pos, location) or_return
+		b_val = get(b, b_pos, location) or_return
+		result.buffer[i] = f(a_val, b_val, ..args)
+	}	
 
 	return result, true
 }

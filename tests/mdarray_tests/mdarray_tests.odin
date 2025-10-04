@@ -341,6 +341,7 @@ test_copy_cast :: proc(t: ^testing.T){
 	}
 }
 
+
 @(test)
 test_reshape :: proc(t : ^testing.T){
 		
@@ -387,5 +388,325 @@ test_reshape :: proc(t : ^testing.T){
 		testing.expect_value(t,  arr3.is_view, false)
 		testing.expect_value(t,  arr3.shape, [2]int{3, 4})
 		testing.expect_value(t,  arr3.strides, [2]int{4, 1})
+	}
+}
+
+
+@(test)
+test_expand_dim :: proc(t : ^testing.T){
+		
+	{
+		arr := md.reshaped_range(f32, [2]int{2, 2})
+		defer md.free_mdarray(arr)
+
+		arr2 := md.expand_dim_view(2,arr, axis=0)
+		testing.expect_value(t,  arr2.shape, [3]int{1, 2, 2})
+		testing.expect_value(t,  md.get_type(arr2), f32)
+		testing.expect_value(t,  md.size(arr2), 4)
+		testing.expect(t,  arr2.is_view)
+		testing.expect_value(t,  arr2.strides, [3]int{4, 2, 1})
+
+		arr3 := md.expand_dim_view(2, arr, axis=1)
+		testing.expect_value(t,  arr3.shape, [3]int{2, 1, 2})
+		arr4 := md.expand_dim_view(2, arr, axis=2)
+		testing.expect_value(t,  arr4.shape, [3]int{2, 2, 1})
+	}
+	
+	{
+		arr := md.reshaped_range(f32, [2]int{2, 2})
+		defer md.free_mdarray(arr)
+
+		arr2 := md.expand_dim_copy(2,arr, axis=0)
+		defer md.free_mdarray(arr2)
+		testing.expect_value(t,  arr2.shape, [3]int{1, 2, 2})
+		testing.expect_value(t,  md.get_type(arr2), f32)
+		testing.expect_value(t,  len(arr2.buffer), 4)
+		testing.expect_value(t,  arr2.is_view, false)
+		testing.expect_value(t,  arr2.strides, [3]int{4, 2, 1})
+
+		arr3 := md.expand_dim_copy(2, arr, axis=1)
+		defer md.free_mdarray(arr3)
+		testing.expect_value(t,  arr3.shape, [3]int{2, 1, 2})
+		testing.expect_value(t,  len(arr3.buffer), 4)
+	}
+}
+
+
+@(test)
+test_flatten :: proc(t : ^testing.T){
+	{
+		arr := md.reshaped_range(f64, [3]int{2, 3, 2})
+		defer md.free_mdarray(arr)
+
+		arr2 := md.flatten_view(arr)
+		
+		testing.expect_value(t,  arr2.shape, [1]int{12})
+		testing.expect_value(t,  md.get_type(arr2), f64)
+		testing.expect_value(t,  md.size(arr2), 12)
+		testing.expect(t,  arr2.is_view)
+		testing.expect_value(t,  arr2.strides, [1]int{1})
+	}
+	
+	{
+		arr := md.reshaped_range(f64, [3]int{2, 3, 2})
+		defer md.free_mdarray(arr)
+
+		arr2 := md.flatten_copy(arr)
+		defer md.free_mdarray(arr2)
+				
+		testing.expect_value(t,  arr2.shape, [1]int{12})
+		testing.expect_value(t,  md.get_type(arr2), f64)
+		testing.expect_value(t,  len(arr2.buffer), 12)
+		testing.expect_value(t,  arr2.is_view, false)
+		testing.expect_value(t,  arr2.strides, [1]int{1})
+
+		for i in 0..<12 {
+			testing.expect_value(t, arr2.buffer[i], f64(i))
+		}
+	}
+}
+
+
+@(test)
+test_broadcast_to :: proc(t : ^testing.T){
+
+	{
+		arr := md.reshaped_range(f64, [2]int{1, 4})
+		defer md.free_mdarray(arr)
+
+		br_arr := md.broadcast_to(arr, [2]int{3, 4})
+		defer md.free_mdarray(br_arr)
+
+		testing.expect_value(t, md.size(br_arr), 12)
+		testing.expect_value(t, br_arr.is_view, false)
+		testing.expect_value(t, br_arr.shape, [2]int{3, 4})
+		
+		expected_br := []f64{0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3}
+		for i in 0..<12{
+			testing.expect_value(t, br_arr.buffer[i], expected_br[i])
+		}
+	}
+	
+	{
+		arr := md.reshaped_range(f64, [1]int{4})
+		defer md.free_mdarray(arr)
+
+		br_arr := md.broadcast_to(arr, [2]int{3, 4})
+		defer md.free_mdarray(br_arr)
+
+		testing.expect_value(t, md.size(br_arr), 12)
+		testing.expect_value(t, br_arr.is_view, false)
+		testing.expect_value(t, br_arr.shape, [2]int{3, 4})
+		
+		expected_br := []f64{0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3}
+		for i in 0..<12{
+			testing.expect_value(t, br_arr.buffer[i], expected_br[i])
+		}
+	}
+
+	{
+		arr := md.reshaped_range(int, [3]int{1, 2, 1})
+		defer md.free_mdarray(arr)
+
+		br_arr := md.broadcast_to(arr, [3]int{2, 2, 3})
+		defer md.free_mdarray(br_arr)
+
+		testing.expect_value(t, md.size(br_arr), 12)
+		testing.expect_value(t, br_arr.is_view, false)
+		testing.expect_value(t, br_arr.shape, [3]int{2, 2, 3})
+		
+		expected_br := []int{0, 0, 0,  1, 1, 1, 0, 0, 0,  1, 1, 1}
+		for i in 0..<12{
+			testing.expect_value(t, br_arr.buffer[i], expected_br[i])
+		}
+	}
+}
+
+
+@(test)
+test_broadcast_map :: proc(t : ^testing.T){
+
+	make_f :: proc($T: typeid) -> proc(T, T, ..T) -> T {
+		return proc(a: T, b: T, args: ..T) -> T {
+			return a * b
+		}
+	}
+
+	{
+		arr := md.reshaped_range(f64, [2]int{1, 4})
+		defer md.free_mdarray(arr)
+
+		arr2 := md.reshaped_range(f64, [2]int{3, 1})
+		defer md.free_mdarray(arr2)
+
+		br_arr := md.broadcast_map(arr, arr2, make_f(f64))
+		defer md.free_mdarray(br_arr)
+
+		testing.expect_value(t, md.size(br_arr), 12)
+		testing.expect_value(t, br_arr.is_view, false)
+		testing.expect_value(t, br_arr.shape, [2]int{3, 4})
+		
+		expected_br := []f64{0, 0, 0, 0, 0, 1, 2, 3, 0, 2, 4, 6}
+		for i in 0..<12{
+			testing.expect_value(t, br_arr.buffer[i], expected_br[i])
+		}
+	}
+	
+	{
+		arr := md.reshaped_range(f32, [3]int{1, 2, 1})
+		defer md.free_mdarray(arr)
+
+		arr2 := md.reshaped_range(f32, [3]int{2, 1, 3})
+		defer md.free_mdarray(arr2)
+
+		br_arr := md.broadcast_map(arr, arr2, make_f(f32))
+		defer md.free_mdarray(br_arr)
+
+		testing.expect_value(t, md.size(br_arr), 12)
+		testing.expect_value(t, br_arr.is_view, false)
+		testing.expect_value(t, br_arr.shape, [3]int{2, 2, 3})
+		
+		expected_br := []f32{0, 0, 0, 0, 1, 2, 0, 0, 0, 3, 4, 5}
+		for i in 0..<12{
+			testing.expect_value(t, br_arr.buffer[i], expected_br[i])
+		}
+	}
+}
+
+
+@(test)
+test_stack :: proc(t : ^testing.T){
+	{
+		arr := md.reshaped_range(f64, [2]int{1, 4})
+		defer md.free_mdarray(arr)
+
+		arr2 := md.reshaped_range(f64, [2]int{1, 4})
+		defer md.free_mdarray(arr2)
+
+		st_arr := md.stack(2, []md.MdArray(f64, 2){arr, arr2}, )
+		defer md.free_mdarray(st_arr)
+
+		testing.expect_value(t, md.size(st_arr), 8)
+		testing.expect_value(t, st_arr.is_view, false)
+		testing.expect_value(t, st_arr.shape, [3]int{2, 1, 4})
+
+		expected_st := []f64{0, 1, 2, 3, 0, 1, 2, 3}
+		for i in 0..<8{
+			testing.expect_value(t, st_arr.buffer[i], expected_st[i])
+		}
+	}
+	
+	{
+		arr := md.reshaped_range(f64, [2]int{2, 3})
+		defer md.free_mdarray(arr)
+
+		arr2 := md.reshaped_range(f64, [2]int{2, 3})
+		defer md.free_mdarray(arr2)
+
+		st_arr := md.stack(2, []md.MdArray(f64, 2){arr, arr2}, axis=1)
+		defer md.free_mdarray(st_arr)
+
+		testing.expect_value(t, md.size(st_arr), 12)
+		testing.expect_value(t, st_arr.is_view, false)
+		testing.expect_value(t, st_arr.shape, [3]int{2, 2, 3})
+
+		expected_st := []f64{0, 1, 2, 0, 1, 2, 3, 4, 5, 3, 4, 5}
+		for i in 0..<12{
+			testing.expect_value(t, st_arr.buffer[i], expected_st[i])
+		}
+	}
+}
+
+
+@(test)
+test_vstack :: proc(t : ^testing.T){
+	arr := md.reshaped_range(f64, [1]int{4})
+	defer md.free_mdarray(arr)
+
+	arr2 := md.reshaped_range(f64, [1]int{4})
+	defer md.free_mdarray(arr2)
+
+	arr3 := md.reshaped_range(f64, [1]int{4})
+	defer md.free_mdarray(arr3)
+
+	st_arr := md.vstack([]md.MdArray(f64, 1){arr, arr2, arr3})
+	defer md.free_mdarray(st_arr)
+
+	testing.expect_value(t, md.size(st_arr), 12)
+	testing.expect_value(t, st_arr.is_view, false)
+	testing.expect_value(t, st_arr.shape, [2]int{3, 4})
+
+	expected_st := []f64{0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3}
+	for i in 0..<12{
+		testing.expect_value(t, st_arr.buffer[i], expected_st[i])
+	}
+}
+
+
+@(test)
+test_hstack :: proc(t : ^testing.T){
+	arr := md.reshaped_range(f64, [1]int{4})
+	defer md.free_mdarray(arr)
+
+	arr2 := md.reshaped_range(f64, [1]int{4})
+	defer md.free_mdarray(arr2)
+
+	st_arr := md.hstack([]md.MdArray(f64, 1){arr, arr2})
+	defer md.free_mdarray(st_arr)
+
+	testing.expect_value(t, md.size(st_arr), 8)
+	testing.expect_value(t, st_arr.is_view, false)
+	testing.expect_value(t, st_arr.shape, [1]int{8})
+
+	expected_st := []f64{0, 1, 2, 3, 0, 1, 2, 3}
+	for i in 0..<8{
+		testing.expect_value(t, st_arr.buffer[i], expected_st[i])
+	}
+}
+
+
+@(test)
+test_concat :: proc(t : ^testing.T){
+	arr := md.reshaped_range(f64, [2]int{2, 3})
+	defer md.free_mdarray(arr)
+
+	arr2 := md.reshaped_range(f64, [2]int{1, 3})
+	defer md.free_mdarray(arr2)
+
+	st_arr := md.concat([]md.MdArray(f64, 2){arr, arr2})
+	defer md.free_mdarray(st_arr)
+
+	testing.expect_value(t, md.size(st_arr), 9)
+	testing.expect_value(t, st_arr.is_view, false)
+	testing.expect_value(t, st_arr.shape, [2]int{3, 3})
+
+	expected_st := []f64{0, 1, 2, 3, 4, 5, 0, 1, 2}
+	for i in 0..<9{
+		testing.expect_value(t, st_arr.buffer[i], expected_st[i])
+	}
+}
+
+
+@(test)
+test_where_cond :: proc(t : ^testing.T){
+	arr := md.reshaped_range(f64, [1]int{8})
+	defer md.free_mdarray(arr)
+
+	mask := md.from_slice([]bool{
+		false, false, true, true, false, false, true, true
+	}, [1]int{8})
+
+	defer md.free_mdarray(mask)
+
+	masked_arr := md.where_cond(arr, mask)
+	defer md.free_mdarray(masked_arr)
+
+	testing.expect_value(t, md.size(masked_arr), 4)
+	testing.expect_value(t, masked_arr.is_view, false)
+	testing.expect_value(t, masked_arr.shape, [1]int{4})
+
+	expected_arr := []f64{2, 3, 6, 7}
+	for i in 0..<4{
+		testing.expect_value(t, masked_arr.buffer[i], expected_arr[i])
 	}
 }
