@@ -105,8 +105,17 @@ permute_dims_view :: proc(
 ) where intrinsics.type_is_numeric(T) || intrinsics.type_is_boolean(T), Nd>=2  #optional_ok {
 
 	validate_initialized(mdarray, location) or_return
-	validate_pos_within_shape(indices, mdarray.shape, location) //TODO validate unique
 
+	for i in 0..<Nd {
+		if indices[i] < 0 || indices[i] >= Nd {
+			logging.error(
+				.ArguementError,
+				"Indices should be unique and within the limits of the array's dims.",
+				location
+			)
+		}
+	}
+	
 	new_shape : [Nd]int
 	new_strides : [Nd]int
 
@@ -157,9 +166,8 @@ permute_default_view :: proc(
 		 axes[j]=i
 		 j+=1
 	}
-	
-	result = permute_dims_view(mdarray, axes, location) or_return	
-	return result, true
+
+	return permute_dims_view(mdarray, axes, location)	
 }
 
 
@@ -178,7 +186,7 @@ permute_default_copy :: proc(
 
 
 
-swapaxes_view :: proc(
+swap_axes_view :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis1:int,
 	axis2:int,
@@ -201,7 +209,7 @@ swapaxes_view :: proc(
 }
 
 
-swapaxes_copy :: proc(
+swap_axes_copy :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis1:int,
 	axis2:int,
@@ -211,7 +219,7 @@ swapaxes_copy :: proc(
 	result:MdArray(T, Nd),
 	ok:bool,
 ) where intrinsics.type_is_numeric(T) || intrinsics.type_is_boolean(T), Nd>=2  #optional_ok {
-	permuted_view := swapaxes_view(mdarray, axis1, axis2, location) or_return
+	permuted_view := swap_axes_view(mdarray, axis1, axis2, location) or_return
 	result = copy_array(permuted_view, allocator, location) or_return
 	return result, true
 }
@@ -222,5 +230,5 @@ transpose_view :: proc{permute_dims_view, permute_default_view}
 transpose_copy :: proc{permute_dims_copy, permute_default_copy}
 vtranspose :: transpose_view
 ctranspose :: transpose_copy
-vswapaxes :: swapaxes_view
-cswapaxes :: swapaxes_copy
+vswap_axes :: swap_axes_view
+cswap_axes :: swap_axes_copy
