@@ -5,6 +5,7 @@ import "core:math"
 
 import "../logging"
 
+
 @(private="file")
 inner_logical_and :: #force_inline proc (a: bool, b: bool, args:..bool) -> bool { return a && b}
 @(private="file")
@@ -88,6 +89,10 @@ logical_or_scalar_array :: proc(
 ) #optional_ok {
 	return scalar_map(b, a, inner_logical_or, flip=true, allocator=allocator, location=location)
 }
+
+
+logical_and :: proc {logical_and_arrays, logical_and_arrays_scalar, logical_and_scalar_array}
+logical_or :: proc {logical_or_arrays, logical_or_arrays_scalar, logical_or_scalar_array}
 
 
 all :: proc(
@@ -195,10 +200,8 @@ is_close_with_args :: proc(
 	return element_wise_map(a, b, inner_is_close(T), rtol, atol, allocator=allocator, location=location)
 }
 
-is_close :: proc{is_close_default, is_close_with_args}
 
-
-all_close :: proc(	
+all_close_default :: proc(	
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
 	location := #caller_location,
@@ -240,3 +243,7 @@ all_close_with_args :: proc(
 
 	return true, true
 }
+
+
+is_close :: proc{is_close_default, is_close_with_args}
+all_close :: proc{all_close_default, all_close_with_args}

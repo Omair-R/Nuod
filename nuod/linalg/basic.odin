@@ -52,12 +52,14 @@ matrix_diagonal :: proc(
 ) where intrinsics.type_is_numeric(T) || intrinsics.type_is_boolean(T) #optional_ok {
 
 	md.validate_initialized(mdarray, location=location) or_return
-	if abs(offset) > 2 {
-		logging.error(.ArguementError, "Recieved an offset larger than the number of dimensions.")
+
+	min_dim := min(mdarray.shape[0], mdarray.shape[1])
+
+	if abs(offset) > min_dim {
+		logging.error(.ArguementError, "Recieved an offset larger than the dimensions of the matrix.")
 		return
 	}
 
-	min_dim := min(mdarray.shape[0], mdarray.shape[1])
 
 	min_dim -= abs(offset)
 	result = md.make_mdarray(T, [1]int{min_dim}, allocator=allocator, location=location)
@@ -81,12 +83,14 @@ matrix_trace :: proc(
 ) where intrinsics.type_is_numeric(T) #optional_ok {
 	
 	md.validate_initialized(mdarray, location=location) or_return
-	if abs(offset) > 2 {
-		logging.error(.ArguementError, "Recieved an offset larger than the number of dimensions.")
+
+	min_dim := min(mdarray.shape[0], mdarray.shape[1])
+
+	if abs(offset) > min_dim {
+		logging.error(.ArguementError, "Recieved an offset larger than the dimensions of the matrix.")
 		return
 	}
 
-	min_dim := min(mdarray.shape[0], mdarray.shape[1])
 	for i in 0..<(min_dim-abs(offset)){
 		x:= offset<=0? i-offset : i
 		y:= offset>=0? i+offset : i

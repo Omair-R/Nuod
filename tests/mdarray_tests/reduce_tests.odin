@@ -5,7 +5,7 @@ import "core:testing"
 @require import md "../../nuod/mdarray"
 
 
-@private
+@(private="file")
 make_sum_f :: proc($T: typeid)-> proc(T, T,..T)->T{
 	return proc (accum: T, val: T, args: ..T) -> T { return accum + val}
 }
