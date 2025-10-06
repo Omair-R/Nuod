@@ -198,7 +198,7 @@ dim_vector_euclidean_norm :: proc(
 	norm_result:md.MdArray(T, Nd-1), ok:bool
 ) where intrinsics.type_is_float(T) #optional_ok {
 	norm_result = md.dim_reduce_map(Nd, mdarray, axis, inner_euclidean(T), cast(T)0, allocator=allocator, location=location) or_return
-	norm_result = md.i_sqrt(norm_result, location=location) or_return 
+	md.i_sqrt(norm_result, location=location) or_return 
 	return norm_result, true
 }
 
@@ -210,9 +210,10 @@ dim_vector_manhattan_norm :: proc(
 	allocator := context.allocator,
 	location := #caller_location,
 ) -> (
-	norm_result:md.MdArray(T, Nd-1), ok:bool
+	norm_result:md.MdArray(T, Nd-1),
+	ok:bool,
 ) where intrinsics.type_is_float(T) #optional_ok {
-	return md.dim_reduce_map(Nd, mdarray, axis, inner_manhattan(T), cast(T)0, allocator=allocator, location=location) or_return
+	return md.dim_reduce_map(Nd, mdarray, axis, inner_manhattan(T), cast(T)0, allocator=allocator, location=location) 
 }
 
 
@@ -225,7 +226,7 @@ dim_vector_chebyshev_norm :: proc(
 ) -> (
 	norm_result:md.MdArray(T, Nd-1), ok:bool
 ) where intrinsics.type_is_float(T) #optional_ok {
-	return md.dim_reduce_map(Nd, mdarray, axis, inner_chebyshev(T), cast(T)0, allocator=allocator, location=location) or_return
+	return md.dim_reduce_map(Nd, mdarray, axis, inner_chebyshev(T), cast(T)0, allocator=allocator, location=location)
 }
 
 dim_vector_l0_norm :: proc(
@@ -237,14 +238,14 @@ dim_vector_l0_norm :: proc(
 ) -> (
 	norm_result:md.MdArray(T, Nd-1), ok:bool
 ) where intrinsics.type_is_float(T) #optional_ok {
-	return md.dim_reduce_map(Nd, mdarray, axis, inner_l0(T), cast(T)0, allocator=allocator, location=location) or_return
+	return md.dim_reduce_map(Nd, mdarray, axis, inner_l0(T), cast(T)0, allocator=allocator, location=location)
 }
 
 dim_vector_norm :: proc(
 	$Nd :int,
 	mdarray: md.MdArray($T, Nd),
 	axis:int,
-	norm : VectorNorm = .Euclidean,
+	norm_type : VectorNorm = .Euclidean,
 	allocator := context.allocator,
 	location := #caller_location,
 ) -> (
@@ -260,6 +261,7 @@ dim_vector_norm :: proc(
 		case .Linfty, .Chebyshev, .Max, .Uniform:
 			return dim_vector_chebyshev_norm(Nd, mdarray, axis, allocator,  location)
 	}
+	return
 }
 
 vector_norm :: proc{full_vector_norm, dim_vector_norm}

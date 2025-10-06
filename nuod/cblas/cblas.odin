@@ -16,7 +16,7 @@ when ODIN_OS == .Windows {
 } else when ODIN_OS == .Linux {
 	foreign import openblas "system:openblas"
 } else when ODIN_OS == .Darwin {
-	foreign import openblas "system:Accelerate.framework"
+	foreign import openblas "system:openblas"
 }
 
 
@@ -72,9 +72,8 @@ CBLAS_SIDE :: enum c.uint {
 	Right = 142,
 }
 
-CBLAS_LAYOUT :: CBLAS_ORDER
 
-@(default_calling_convention = "c", link_prefix = "cblas_")
+@(default_calling_convention = "c", link_prefix = "")
 foreign openblas {
 	/*Set the number of threads on runtime.*/
 	openblas_set_num_threads :: proc(num_threads: c.int) ---
@@ -96,15 +95,19 @@ foreign openblas {
 
 	/* Get the parallelization type which is used by OpenBLAS */
 	openblas_get_parallel :: proc() -> c.int ---
+}
 
+
+@(default_calling_convention = "c", link_prefix = "cblas_")
+foreign openblas {
 	sdsdot :: proc(n: blasint, alpha: f32, x: ^f32, incx: blasint, y: ^f32, incy: blasint) -> f32 ---
 	dsdot :: proc(n: blasint, x: ^f32, incx: blasint, y: ^f32, incy: blasint) -> f64 ---
 	sdot :: proc(n: blasint, x: ^f32, incx: blasint, y: ^f32, incy: blasint) -> f32 ---
 	ddot :: proc(n: blasint, x: ^f64, incx: blasint, y: ^f64, incy: blasint) -> f64 ---
-	cdotu :: proc(n: blasint, x: rawptr, incx: blasint, y: rawptr, incy: blasint) -> openblas_complex_float ---
-	cdotc :: proc(n: blasint, x: rawptr, incx: blasint, y: rawptr, incy: blasint) -> openblas_complex_float ---
-	zdotu :: proc(n: blasint, x: rawptr, incx: blasint, y: rawptr, incy: blasint) -> openblas_complex_double ---
-	zdotc :: proc(n: blasint, x: rawptr, incx: blasint, y: rawptr, incy: blasint) -> openblas_complex_double ---
+	cdotu :: proc(n: blasint, x: rawptr, incx: blasint, y: rawptr, incy: blasint) -> complex64 ---
+	cdotc :: proc(n: blasint, x: rawptr, incx: blasint, y: rawptr, incy: blasint) -> complex64 ---
+	zdotu :: proc(n: blasint, x: rawptr, incx: blasint, y: rawptr, incy: blasint) -> complex128 ---
+	zdotc :: proc(n: blasint, x: rawptr, incx: blasint, y: rawptr, incy: blasint) -> complex128 ---
 	cdotu_sub :: proc(n: blasint, x: rawptr, incx: blasint, y: rawptr, incy: blasint, ret: rawptr) ---
 	cdotc_sub :: proc(n: blasint, x: rawptr, incx: blasint, y: rawptr, incy: blasint, ret: rawptr) ---
 	zdotu_sub :: proc(n: blasint, x: rawptr, incx: blasint, y: rawptr, incy: blasint, ret: rawptr) ---

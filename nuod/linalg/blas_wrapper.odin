@@ -47,7 +47,7 @@ cblas_dot_wrapper :: proc (x: []$T, y: []T) -> (
 }
 	
 
-cblas_matvec :: proc (
+cblas_matvec_wrapper :: proc (
 	a:[]$T, v:[]T,
 	m, n: cblas.blasint,
 	w_out: []T,

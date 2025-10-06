@@ -20,7 +20,7 @@ inner_product :: proc(
 	md.validate_initialized(b, location) or_return
 	md.validate_shape_match(a, b, location) or_return
 
-	when T == f32 || T == f64 {
+	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64) {
 		if !a.is_view && !b.is_view {
 			result = cblas_dot_wrapper(a.buffer, b.buffer) or_return
 			return result, true
@@ -90,43 +90,43 @@ matmul :: proc(
 	 ok:bool,
 ) where intrinsics.type_is_numeric(T), Nd>=2 #optional_ok {
 
-	when T == f32 || T == f64{
-		return cblas_matmul(a, b, allocator, location)
-	}
-
 	md.validate_initialized(a, location) or_return
 	md.validate_initialized(b, location) or_return
 
-	a_shape : [Nd+1]int
-	b_shape : [Nd+1]int
-
-	offset := 0
-	for i in 0..<Nd{
-		if i == Nd-2{
-			b_shape[i] = 1
-			offset = 1
-		}
-		i_b:= i+offset
-		a_shape[i] = a.shape[i]
-		b_shape[i_b] = b.shape[i]
+	if a.shape[Nd-1] != b.shape[Nd-2] {
+		logging.error(
+			.ArguementError,
+			"Inner size of matrices is inconsistent.",
+			location,
+		)
+		return 
 	}
-	a_shape[Nd] = 1
 
+	a := a
+	b := b
 
-	a_v := md.reshape_view(a, a_shape, location) or_return
-	b_v := md.reshape_view(b, b_shape, location) or_return
+	a_is_view := a.is_view
+	b_is_view := b.is_view
+	if a_is_view {
+		a = md.copy_array(a, allocator, location) or_return
+	}
+	defer if a_is_view do md.free_mdarray(a)
+	if b_is_view {
+		b = md.copy_array(b, allocator, location) or_return
+	}
+	defer if b_is_view do md.free_mdarray(b)
 
-	a_shape[Nd] = b_shape[Nd]
-	b_shape[Nd-2] = a_shape[Nd-2]
+	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64){
+		return cblas_matmul(a, b, allocator, location)
+	}
 
+	a_v := md.expand_dim_view(Nd, a, axis=Nd, location=location) or_return
+	b_v := md.expand_dim_view(Nd, b, axis=Nd-2, location=location) or_return
 
-	a_b := md.broadcast_to(a_v, a_shape, allocator, location) or_return
-	b_b := md.broadcast_to(b_v, b_shape, allocator, location) or_return
-	defer md.free_mdarray(a_b)
-	defer md.free_mdarray(b_b)
+	
+	f:: proc(a :T, b: T, args: ..T) -> T { return a * b }
 
-
-	inter_mul := md.mul(a_b, b_b, allocator, location) or_return
+	inter_mul := md.broadcast_map(a_v, b_v, f, allocator=allocator, location=location) 
 	defer md.free_mdarray(inter_mul)
 
 
@@ -147,30 +147,10 @@ cblas_matmul :: proc(
 	 ok:bool,
 ) where intrinsics.type_is_float(T), Nd>=2 #optional_ok {
 
-	md.validate_initialized(a, location) or_return
-	md.validate_initialized(b, location) or_return
-
-	if a.is_view || b.is_view{
-		logging.error( //TODO
-			.NotImplemented,
-			"BLAS-based matrix multiplication isn't supported for views, yet.",
-			location,
-		)
-		return 
-	}
 
 	m:= a.shape[Nd-2]
 	n:= b.shape[Nd-1]
 	k:= a.shape[Nd-1]
-
-	if k != b.shape[Nd-2] {
-		logging.error(
-			.ArguementError,
-			"Inner size of matrices is inconsistent.",
-			location,
-		)
-		return 
-	}
 
 	m_b:= cblas.blasint(m)
 	n_b:= cblas.blasint(n)
@@ -182,7 +162,6 @@ cblas_matmul :: proc(
 
 	when Nd == 2 {
 		result = md.make_mdarray(T, result_shape, allocator, location) or_return
-		fmt.println("shape:", result_shape)	
 		cblas_matmul_wrapper(
 			a.buffer, b.buffer,
 			m_b, n_b, k_b,
@@ -228,7 +207,7 @@ cblas_matmul :: proc(
 }
 
 
-matvec_stacked :: proc(	
+matvec :: proc(	
 	a: md.MdArray($T, $Nd),
 	v: md.MdArray(T, $Md),
 	allocator:= context.allocator,
@@ -241,19 +220,7 @@ matvec_stacked :: proc(
 	md.validate_initialized(a, location) or_return
 	md.validate_initialized(v, location) or_return
 
-	if a.is_view || v.is_view{
-		logging.error( //TODO
-			.NotImplemented,
-			"BLAS-based matrix multiplication isn't supported for views, yet.",
-			location,
-		)
-		return 
-	}
-
-	m := a.shape[Nd-2]
-	n := a.shape[Nd-1]
-
-	if (v.shape[Md-1] != n){
+	if (v.shape[Md-1] != a.shape[Nd-1]){
 		logging.error(
 			.ArguementError,
 			"Inconsistance shape with the length of provided arrays.",
@@ -261,9 +228,7 @@ matvec_stacked :: proc(
 		)
 		return 
 	}
-	
-	result_shape : [Md]int
-	result_shape[Md-1] = m
+
 
 	when Md != 1 do for d in 0..<Md-1 {
 		if a.shape[d] != v.shape[d]{
@@ -274,62 +239,93 @@ matvec_stacked :: proc(
 			)
 			return
 		}
-		result_shape[d] = v.shape[d]
-	}  
+	}
+
 	
-	result = md.make_mdarray(T, result_shape, allocator, location) or_return
+	a := a
+	v := v
 
-	when T == f32 || T == f64 {
-		when Nd == 2 {
-			cblas_matvec(
-				a.buffer,
-				v.buffer,
-				cblas.blasint(m),
-				cblas.blasint(n),
-				result.buffer,
-				transpose_a = false,
-			) or_return
-			return result, true
-		}
+	a_is_view := a.is_view
+	v_is_view := v.is_view
+	if a_is_view {
+		a = md.copy_array(a, allocator, location) or_return
+	}
+	defer if a_is_view do md.free_mdarray(a)
+	if v_is_view {
+		v = md.copy_array(v, allocator, location) or_return
+	}
+	defer if v_is_view do md.free_mdarray(v)
+	
 
-		a_sig:= m*n
-		v_sig:= n
-		r_sig:= m
-
-		a_s: []T
-		v_s: []T
-		w_out: []T
-
-		m_b:= cblas.blasint(m)
-		n_b:= cblas.blasint(n)
-
-		for i in 0..<(md.size(result)/r_sig){
-				w_out = result.buffer[i*r_sig: i*r_sig+r_sig]
-				a_s = a.buffer[i*a_sig: i*a_sig+a_sig]
-				v_s = v.buffer[i*v_sig: i*v_sig+v_sig]
-
-				cblas_matvec(
-					a_s,
-					v_s,
-					m_b, n_b,
-					w_out,
-					transpose_a = false,
-				) or_return
-		}
-
-		return result, true
+	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64) {
+		return cblas_matvec(a, v, allocator, location)
 	}
 
 	f:: proc(a :T, b: T, args: ..T) -> T { return a * b }
 
 	v_r := md.expand_dim_view(Md, v, axis=Md-1, location=location) or_return
 
-	mul_inter:= md.broadcast_map(a , v_r, f, allocator=allocator, location=location)
-	defer md.free_mdarray(mul_inter)
-		
-	result = md.dim_reduce_sum(Nd, mul_inter, Nd-1, allocator=allocator, location=location) or_return 
+	inter_mul := md.broadcast_map(a , v_r, f, allocator=allocator, location=location) or_return
+	defer md.free_mdarray(inter_mul)
 
+	result = md.dim_reduce_sum(Nd, inter_mul, Md, allocator=allocator, location=location) or_return 
 	return result, true
 }
 
 
+@(private="file")
+cblas_matvec :: proc(	
+	a: md.MdArray($T, $Nd),
+	v: md.MdArray(T, $Md),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 result:md.MdArray(T, Md),
+	 ok:bool,
+) where intrinsics.type_is_float(T), (Nd-1)==Md #optional_ok {
+	m := a.shape[Nd-2]
+	n := a.shape[Nd-1]
+
+	result_shape := v.shape
+	result_shape[Md-1] = m
+
+	result = md.make_mdarray(T, result_shape, allocator, location) or_return
+	when Nd == 2 {
+		cblas_matvec_wrapper(
+			a.buffer,
+			v.buffer,
+			cblas.blasint(m),
+			cblas.blasint(n),
+			result.buffer,
+			transpose_a = false,
+		) or_return
+		return result, true
+	}
+
+	a_sig:= m*n
+	v_sig:= n
+	r_sig:= m
+
+	a_s: []T
+	v_s: []T
+	w_out: []T
+
+	m_b:= cblas.blasint(m)
+	n_b:= cblas.blasint(n)
+
+	for i in 0..<(md.size(result)/r_sig){
+			w_out = result.buffer[i*r_sig: i*r_sig+r_sig]
+			a_s = a.buffer[i*a_sig: i*a_sig+a_sig]
+			v_s = v.buffer[i*v_sig: i*v_sig+v_sig]
+
+			cblas_matvec_wrapper(
+				a_s,
+				v_s,
+				m_b, n_b,
+				w_out,
+				transpose_a = false,
+			) or_return
+	}
+
+	return result, true
+}
