@@ -306,3 +306,88 @@ test_narrowed_2d_matvec :: proc(t: ^testing.T){
 	matmul_2d_type_tester(t, int)
 
 }
+
+
+@(test)
+test_2d_vecmat :: proc(t: ^testing.T){
+	matmul_2d_type_tester :: proc (t: ^testing.T, $T: typeid) {
+		arr := md.reshaped_range(T, [2]int{3, 2})
+		defer md.free_mdarray(arr)
+		
+		arr2 := md.from_range(T, 3)
+		defer md.free_mdarray(arr2)
+
+		mat := nl.vecmat(arr2, arr)
+		defer md.free_mdarray(mat)
+
+		
+		testing.expect_value(t, mat.shape, [1]int{2})
+		testing.expect_value(t, len(mat.buffer), 2)
+
+		expect_arr := []T{10, 13}
+		for i in 0..<2{
+			testing.expect_value(t, mat.buffer[i], expect_arr[i])
+		}
+	}
+
+	matmul_2d_type_tester(t, f64)
+	matmul_2d_type_tester(t, f32)
+	matmul_2d_type_tester(t, u32)
+	matmul_2d_type_tester(t, int)
+}
+
+
+@(test)
+test_nd_vecmat :: proc(t: ^testing.T){
+	matmul_3d_type_tester :: proc (t: ^testing.T, $T: typeid){
+		arr := md.reshaped_range(T, [3]int{2, 3, 2})
+		defer md.free_mdarray(arr)
+		
+		arr2 := md.reshaped_range(T, [2]int{2, 3})
+		defer md.free_mdarray(arr2)
+
+		mat := nl.vecmat(arr2, arr)
+		defer md.free_mdarray(mat)
+
+		
+		testing.expect_value(t, mat.shape, [2]int{2, 2})
+		testing.expect_value(t, len(mat.buffer), 4)
+
+		expect_arr := []T{10, 13}
+
+		for i in 0..<2{
+		 testing.expect_value(t, mat.buffer[i], expect_arr[i])
+		}
+	}
+
+	matmul_4d_type_tester :: proc (t: ^testing.T, $T: typeid){
+		arr := md.reshaped_range(T, [4]int{2, 2, 3, 2})
+		defer md.free_mdarray(arr)
+		
+		arr2 := md.reshaped_range(T, [3]int{2, 2, 3})
+		defer md.free_mdarray(arr2)
+
+		mat := nl.vecmat(arr2, arr)
+		defer md.free_mdarray(mat)
+
+		
+		testing.expect_value(t, mat.shape, [3]int{2, 2, 2})
+		testing.expect_value(t, len(mat.buffer), 8)
+
+
+		expect_arr := []T{10, 13}
+		for i in 0..<2{
+			testing.expect_value(t, mat.buffer[i], expect_arr[i])
+		}
+	}
+	matmul_3d_type_tester(t, f64)
+	matmul_3d_type_tester(t, f32)
+	matmul_3d_type_tester(t, i32)
+	matmul_3d_type_tester(t, u64)
+
+	matmul_4d_type_tester(t, f64)
+	matmul_4d_type_tester(t, f32)
+	matmul_4d_type_tester(t, i32)
+	matmul_4d_type_tester(t, u64)
+}
+

@@ -258,7 +258,7 @@ matvec :: proc(
 	
 
 	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64) {
-		return cblas_matvec(a, v, allocator, location)
+		return cblas_matvec(a, v, allocator=allocator, location=location)
 	}
 
 	f:: proc(a :T, b: T, args: ..T) -> T { return a * b }
@@ -273,10 +273,77 @@ matvec :: proc(
 }
 
 
+vecmat :: proc(	
+	v: md.MdArray($T, $Md),
+	a: md.MdArray(T, $Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 result:md.MdArray(T, Md),
+	 ok:bool,
+) where intrinsics.type_is_numeric(T), (Nd-1)==Md #optional_ok {
+
+	md.validate_initialized(a, location) or_return
+	md.validate_initialized(v, location) or_return
+
+	if (v.shape[Md-1] != a.shape[Nd-2]){
+		logging.error(
+			.ArguementError,
+			"Inconsistance shape with the length of provided arrays.",
+			location = location,
+		)
+		return 
+	}
+
+
+	when Md != 1 do for d in 0..<Md-1 {
+		if a.shape[d] != v.shape[d]{
+			logging.error(
+				.ArguementError,
+				"Inconsistent shape for the stack of matrices provided",
+				location,
+			)
+			return
+		}
+	}
+
+	
+	a := a
+	v := v
+
+	a_is_view := a.is_view
+	v_is_view := v.is_view
+	if a_is_view {
+		a = md.copy_array(a, allocator, location) or_return
+	}
+	defer if a_is_view do md.free_mdarray(a)
+	if v_is_view {
+		v = md.copy_array(v, allocator, location) or_return
+	}
+	defer if v_is_view do md.free_mdarray(v)
+	
+
+	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64) {
+		return cblas_matvec(a, v, transpose_a=true, allocator=allocator, location=location)
+	}
+
+	f:: proc(a :T, b: T, args: ..T) -> T { return a * b }
+
+	v_r := md.expand_dim_view(Md, v, axis=Md, location=location) or_return
+
+	inter_mul := md.broadcast_map(a , v_r, f, allocator=allocator, location=location) or_return
+	defer md.free_mdarray(inter_mul)
+
+	result = md.dim_reduce_sum(Nd, inter_mul, Md-1, allocator=allocator, location=location) or_return 
+	return result, true
+}
+
+
 @(private="file")
 cblas_matvec :: proc(	
 	a: md.MdArray($T, $Nd),
 	v: md.MdArray(T, $Md),
+	transpose_a:=false,
 	allocator:= context.allocator,
 	location := #caller_location,
 ) -> (
@@ -287,7 +354,8 @@ cblas_matvec :: proc(
 	n := a.shape[Nd-1]
 
 	result_shape := v.shape
-	result_shape[Md-1] = m
+
+	result_shape[Md-1] = transpose_a? n : m
 
 	result = md.make_mdarray(T, result_shape, allocator, location) or_return
 	when Nd == 2 {
@@ -297,7 +365,7 @@ cblas_matvec :: proc(
 			cblas.blasint(m),
 			cblas.blasint(n),
 			result.buffer,
-			transpose_a = false,
+			transpose_a = transpose_a,
 		) or_return
 		return result, true
 	}
@@ -323,7 +391,7 @@ cblas_matvec :: proc(
 				v_s,
 				m_b, n_b,
 				w_out,
-				transpose_a = false,
+				transpose_a = transpose_a,
 			) or_return
 	}
 
