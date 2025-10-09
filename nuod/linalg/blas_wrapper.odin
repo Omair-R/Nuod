@@ -3,10 +3,187 @@ import cblas "../cblas"
 import "base:intrinsics"
 
 
-cblas_dot_wrapper :: proc (x: []$T, y: []T) -> (
+cblas_real_norm2_wrapper :: proc (x: []$T) -> (
 	result: T,
 	ok: bool,
 ) where intrinsics.type_is_float(T) #optional_ok
+{
+
+	when T == f32{
+		result = cblas.snrm2(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else when T == f64{
+		result = cblas.dnrm2(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else {
+		logging.error(
+			.ArguementError,
+			"OpenBlas functions only support f32 and f64 types.",
+			location = location,
+		)
+	}
+
+	return result, true
+}
+
+
+cblas_cmplx_norm2_wrapper :: proc (x: []$T, $R: typeid) -> (
+	result: R,
+	ok: bool,
+) where intrinsics.type_is_complex(T) #optional_ok
+{
+	when T == complex64{
+		result = cblas.scnrm2(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else when T == complex128{
+		result = cblas.dznrm2(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else {
+		logging.error(
+			.ArguementError,
+			"OpenBlas functions only support complex64 and complex128 types.",
+			location = location,
+		)
+	}
+
+	return result, true
+}
+
+
+cblas_real_norm1_wrapper :: proc (x: []$T) -> (
+	result: T,
+	ok: bool,
+) where intrinsics.type_is_float(T) #optional_ok
+{
+
+	when T == f32{
+		result = cblas.sasum(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else when T == f64{
+		result = cblas.dasum(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else {
+		logging.error(
+			.ArguementError,
+			"OpenBlas functions only support f32 and f64 types.",
+			location = location,
+		)
+	}
+
+	return result, true
+}
+
+
+cblas_cmplx_norm1_wrapper :: proc (x: []$T, $R: typeid) -> (
+	result: R,
+	ok: bool,
+) where intrinsics.type_is_complex(T) #optional_ok
+{
+	when T == complex64{
+		result = cblas.scasum(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else when T == complex128{
+		result = cblas.dzasum(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else {
+		logging.error(
+			.ArguementError,
+			"OpenBlas functions only support complex64 and complex128 types.",
+			location = location,
+		)
+	}
+
+	return result, true
+}
+
+
+cblas_real_norminfty_wrapper :: proc (x: []$T) -> (
+	result: T,
+	ok: bool,
+) where intrinsics.type_is_float(T) #optional_ok
+{
+
+	when T == f32{
+		result = cblas.sasum(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else when T == f64{
+		result = cblas.dasum(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else {
+		logging.error(
+			.ArguementError,
+			"OpenBlas functions only support f32 and f64 types.",
+			location = location,
+		)
+	}
+
+	return result, true
+}
+
+
+cblas_cmplx_norminfty_wrapper :: proc (x: []$T, $R: typeid) -> (
+	result: R,
+	ok: bool,
+) where intrinsics.type_is_complex(T) #optional_ok
+{
+	when T == complex64{
+		result = cblas.scamax(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else when T == complex128{
+		result = cblas.dzamax(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+		)
+	} else {
+		logging.error(
+			.ArguementError,
+			"OpenBlas functions only support complex64 and complex128 types.",
+			location = location,
+		)
+	}
+
+	return result, true
+}
+
+
+cblas_dot_wrapper :: proc (x: []$T, y: []T) -> (
+	result: T,
+	ok: bool,
+) where intrinsics.type_is_float(T)|| intrinsics.type_is_complex(T) #optional_ok
 {
 	when ODIN_DEBUG {
 		if len(x) != len(y) {
@@ -35,6 +212,22 @@ cblas_dot_wrapper :: proc (x: []$T, y: []T) -> (
 			raw_data(y),
 			cblas.blasint(1),
 		)
+	} else when T == complex64 {
+		result = cblas.cdotu(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+			raw_data(y),
+			cblas.blasint(1),
+		)
+	} else when T == complex128 {
+		result = cblas.zdotu(
+			cblas.blasint(len(x)),
+			raw_data(x),
+			cblas.blasint(1),
+			raw_data(y),
+			cblas.blasint(1),
+		)
 	} else {
 		logging.error(
 			.ArguementError,
@@ -54,7 +247,7 @@ cblas_matvec_wrapper :: proc (
 	transpose_a:= false,
 ) -> (
 	ok: bool
-) where intrinsics.type_is_float(T) {
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T){
 		
 	when ODIN_DEBUG {
 		if m <= 0 || n <= 0 {
@@ -88,6 +281,7 @@ cblas_matvec_wrapper :: proc (
 
 	lda: cblas.blasint = n
 
+
 	when T == f32 {
 		cblas.sgemv(
 			.RowMajor,
@@ -116,6 +310,38 @@ cblas_matvec_wrapper :: proc (
 			raw_data(w_out),
 			cblas.blasint(1),
 		)
+	} else when T == complex64 {
+		alpha :complex64 = complex(1.0, 0.0)
+		beta :complex64 = complex(0.0, 0.0)
+		cblas.cgemv(
+			.RowMajor,
+			trans_a,
+			m, n, 
+			&alpha,
+			raw_data(a),
+			lda,
+			raw_data(v),
+			cblas.blasint(1),
+			&beta,
+			raw_data(w_out),
+			cblas.blasint(1)
+		)
+	} else when T == complex128 {
+		alpha :complex128 = complex(1.0, 0.0)
+		beta :complex128 = complex(0.0, 0.0)
+		cblas.zgemv(
+			.RowMajor,
+			trans_a,
+			m, n, 
+			&alpha,
+			raw_data(a),
+			lda,
+			raw_data(v),
+			cblas.blasint(1),
+			&beta,
+			raw_data(w_out),
+			cblas.blasint(1)
+		)
 	} else {
 		logging.error(
 			.ArguementError,
@@ -137,7 +363,7 @@ cblas_matmul_wrapper :: proc (
 	transpose_b:=false
 ) -> (
 	ok: bool
-) where intrinsics.type_is_float(T) 
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) 
 {
 	when ODIN_DEBUG {
 		if m <= 0 || n <= 0 || k <= 0 {
@@ -195,6 +421,34 @@ cblas_matmul_wrapper :: proc (
 			1.0,
 			raw_data(a), lda,
 			raw_data(b), ldb, 0.0,
+			raw_data(c_out), ldc
+		)
+	} else when T == complex64 {
+		alpha :complex64 = complex(1.0, 0.0)
+		beta :complex64 = complex(0.0, 0.0)
+		cblas.cgemm(
+			.RowMajor,
+			trans_a,
+			trans_b,
+			m, n, k,
+			&alpha,
+			raw_data(a), lda,
+			raw_data(b), ldb,
+			&beta,
+			raw_data(c_out), ldc
+		)
+	} else when T == complex128 {
+		alpha :complex128 = complex(1.0, 0.0)
+		beta :complex128 = complex(0.0, 0.0)
+		cblas.zgemm(
+			.RowMajor,
+			trans_a,
+			trans_b,
+			m, n, k,
+			&alpha,
+			raw_data(a), lda,
+			raw_data(b), ldb,
+			&beta,
 			raw_data(c_out), ldc
 		)
 	} else {

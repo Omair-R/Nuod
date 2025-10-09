@@ -103,6 +103,25 @@ test_2d_matmul :: proc(t: ^testing.T){
 			testing.expect_value(t, mat.buffer[i], expect_arr[i])
 		}
 	}
+	{
+		arr := md.from_slice([]complex128{0, 1+1i, 2, 3, 4, 5}, [2]int{2, 3})
+		defer md.free_mdarray(arr)
+		
+		arr2 := md.from_slice([]complex128{0, 1, 2, 3, 4, 5}, [2]int{3, 2})
+		defer md.free_mdarray(arr2)
+
+		mat := nl.matmul(arr, arr2)
+		defer md.free_mdarray(mat)
+
+		
+		testing.expect_value(t, mat.shape, [2]int{2, 2})
+		testing.expect_value(t, len(mat.buffer), 4)
+
+		expect_arr := []complex128{10+2i, 13+3i, 28+0i, 40+0i}
+		for i in 0..<4{
+			testing.expect_value(t, mat.buffer[i], expect_arr[i])
+		}
+	}
 }
 
 
@@ -219,6 +238,29 @@ test_2d_matvec :: proc(t: ^testing.T){
 	matmul_2d_type_tester(t, f32)
 	matmul_2d_type_tester(t, u32)
 	matmul_2d_type_tester(t, int)
+
+	matmul_cmplx_type_tester :: proc (t: ^testing.T, $T: typeid) {
+		arr := md.from_slice([]T{0, 1, 2, 3, 4, 5}, [2]int{2, 3})
+		defer md.free_mdarray(arr)
+		
+		arr2 := md.from_slice([]T{0, 1, 2}, [1]int{3})
+		defer md.free_mdarray(arr2)
+
+		mat := nl.matvec(arr, arr2)
+		defer md.free_mdarray(mat)
+
+		
+		testing.expect_value(t, mat.shape, [1]int{2})
+		testing.expect_value(t, len(mat.buffer), 2)
+
+		expect_arr := []T{5, 14}
+		for i in 0..<2{
+			testing.expect_value(t, mat.buffer[i], expect_arr[i])
+		}
+	}
+
+	matmul_cmplx_type_tester(t, complex64)
+	matmul_cmplx_type_tester(t, complex128)
 }
 
 @(test)
@@ -334,6 +376,29 @@ test_2d_vecmat :: proc(t: ^testing.T){
 	matmul_2d_type_tester(t, f32)
 	matmul_2d_type_tester(t, u32)
 	matmul_2d_type_tester(t, int)
+
+	matmul_cmplx_type_tester :: proc (t: ^testing.T, $T: typeid) {
+		arr := md.from_slice([]T{0, 1, 2, 3, 4, 5}, [2]int{3, 2})
+		defer md.free_mdarray(arr)
+		
+		arr2 := md.from_slice([]T{0, 1, 2}, [1]int{3})
+		defer md.free_mdarray(arr2)
+
+		mat := nl.vecmat(arr2, arr)
+		defer md.free_mdarray(mat)
+
+		
+		testing.expect_value(t, mat.shape, [1]int{2})
+		testing.expect_value(t, len(mat.buffer), 2)
+
+		expect_arr := []T{10, 13}
+		for i in 0..<2{
+			testing.expect_value(t, mat.buffer[i], expect_arr[i])
+		}
+	}
+
+	matmul_cmplx_type_tester(t, complex64)
+	matmul_cmplx_type_tester(t, complex128)
 }
 
 

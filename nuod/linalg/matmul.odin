@@ -20,7 +20,7 @@ inner_product :: proc(
 	md.validate_initialized(b, location) or_return
 	md.validate_shape_match(a, b, location) or_return
 
-	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64) {
+	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64 || T == complex64 || T == complex128) {
 		if !a.is_view && !b.is_view {
 			result = cblas_dot_wrapper(a.buffer, b.buffer) or_return
 			return result, true
@@ -116,7 +116,8 @@ matmul :: proc(
 	}
 	defer if b_is_view do md.free_mdarray(b)
 
-	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64){
+	when cblas.OPENBLAS_SUPPORTED &&
+	(T == f32 || T == f64 || T == complex64 || T== complex128){
 		return cblas_matmul(a, b, allocator, location)
 	}
 
@@ -145,7 +146,7 @@ cblas_matmul :: proc(
 ) -> (
 	 result:md.MdArray(T, Nd),
 	 ok:bool,
-) where intrinsics.type_is_float(T), Nd>=2 #optional_ok {
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 #optional_ok {
 
 
 	m:= a.shape[Nd-2]
@@ -257,7 +258,7 @@ matvec :: proc(
 	defer if v_is_view do md.free_mdarray(v)
 	
 
-	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64) {
+	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64 || T == complex64 || T == complex128) {
 		return cblas_matvec(a, v, allocator=allocator, location=location)
 	}
 
@@ -323,7 +324,7 @@ vecmat :: proc(
 	defer if v_is_view do md.free_mdarray(v)
 	
 
-	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64) {
+	when cblas.OPENBLAS_SUPPORTED && (T == f32 || T == f64 || T == complex64 || T == complex128) {
 		return cblas_matvec(a, v, transpose_a=true, allocator=allocator, location=location)
 	}
 
@@ -349,7 +350,7 @@ cblas_matvec :: proc(
 ) -> (
 	 result:md.MdArray(T, Md),
 	 ok:bool,
-) where intrinsics.type_is_float(T), (Nd-1)==Md #optional_ok {
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), (Nd-1)==Md #optional_ok {
 	m := a.shape[Nd-2]
 	n := a.shape[Nd-1]
 
