@@ -710,3 +710,106 @@ test_where_cond :: proc(t : ^testing.T){
 		testing.expect_value(t, masked_arr.buffer[i], expected_arr[i])
 	}
 }
+
+
+@test
+test_get_reduced_pos :: proc(t : ^testing.T) {
+	arr := md.reshaped_range(f64, [3]int{2, 2, 3})
+	defer md.free_mdarray(arr)
+
+	pos := md.get_reduced_pos(arr.shape, 0, 1)
+
+	testing.expect_value(t, pos, [3]int{0, 0, 0})
+
+	pos = md.get_reduced_pos(arr.shape, 1, 1)
+	testing.expect_value(t, pos, [3]int{0, 0, 1})
+
+	pos = md.get_reduced_pos(arr.shape, 3, 1)
+	testing.expect_value(t, pos, [3]int{1, 0, 0})
+
+	pos = md.get_reduced_pos(arr.shape, 5, 1)
+	testing.expect_value(t, pos, [3]int{1, 0, 2})
+
+	pos = md.get_reduced_pos(arr.shape, 3, 2)
+	testing.expect_value(t, pos, [3]int{1, 1, 0})
+
+	pos = md.get_reduced_pos(arr.shape, 2, 2)
+	testing.expect_value(t, pos, [3]int{1, 0, 0})
+}
+
+
+@test
+test_extract_linear_array :: proc(t : ^testing.T) {
+	arr := md.reshaped_range(int, [3]int{2, 2, 3})
+	defer md.free_mdarray(arr)
+
+	l_arr := make([]int, 2)
+	defer delete(l_arr)
+
+	md.extract_linear_array(arr, l_arr, 0, 1)
+	testing.expect_value(t, l_arr[0], 0)
+	testing.expect_value(t, l_arr[1], 3)
+
+	md.extract_linear_array(arr, l_arr, 2, 1)
+	testing.expect_value(t, l_arr[0], 2)
+	testing.expect_value(t, l_arr[1], 5)
+	
+	md.extract_linear_array(arr, l_arr, 4, 1)
+	testing.expect_value(t, l_arr[0], 7)
+	testing.expect_value(t, l_arr[1], 10)
+
+	arr2 := md.narrow(arr, 2, 0, 2)
+	md.extract_linear_array(arr2, l_arr, 3, 2)
+	testing.expect_value(t, l_arr[0], 9)
+	testing.expect_value(t, l_arr[1], 10)
+	
+	l_arr2 := make([]int, 3)
+	defer delete(l_arr2)
+
+	md.extract_linear_array(arr, l_arr2, 3, 2)
+	testing.expect_value(t, l_arr2[0], 9)
+	testing.expect_value(t, l_arr2[1], 10)
+	testing.expect_value(t, l_arr2[2], 11)
+}
+
+
+@test
+test_placein_linear_array :: proc(t : ^testing.T) {
+	arr := md.reshaped_range(int, [3]int{2, 2, 3})
+	defer md.free_mdarray(arr)
+
+	l_arr := make([]int, 2)
+	defer delete(l_arr)
+
+	l_arr[0] = 2
+	l_arr[1] = 5
+	md.placein_linear_array(arr, l_arr, 0, 1)
+	testing.expect_value(t, arr.buffer[0], 2)
+	testing.expect_value(t, arr.buffer[3], 5)
+
+	l_arr[0] = 9
+	l_arr[1] = 3
+	md.placein_linear_array(arr, l_arr, 2, 1)
+	testing.expect_value(t, arr.buffer[2], 9)
+	testing.expect_value(t, arr.buffer[5], 3)
+
+	
+	arr2 := md.narrow(arr, 2, 0, 2)
+
+	l_arr[0] = 7
+	l_arr[1] = 8
+	md.placein_linear_array(arr2, l_arr, 3, 2)
+	testing.expect_value(t, arr2.buffer[9], 7)
+	testing.expect_value(t, arr2.buffer[10], 8)
+
+	l_arr2 := make([]int, 3)
+	defer delete(l_arr2)
+
+	l_arr2[0] = 3
+	l_arr2[1] = 4
+	l_arr2[2] = 5
+	md.placein_linear_array(arr, l_arr2, 3, 2)
+	testing.expect_value(t, arr.buffer[9],  3)
+	testing.expect_value(t, arr.buffer[10], 4)
+	testing.expect_value(t, arr.buffer[11], 5)
+}

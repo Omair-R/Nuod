@@ -77,6 +77,107 @@ move_through_strides :: #force_inline proc(
 }
 
 
+get_reduced_pos :: proc(
+	shape: [$Nd]int,
+	idx:int,
+	axis:int
+) -> (
+	pos: [Nd]int,
+) {
+	
+	reduced_shape: [Nd]int
+	for d in 0..<Nd{
+		if d==axis {
+			reduced_shape[d] =1
+			continue
+		}
+		reduced_shape[d] = shape[d]
+	}
+
+	strides:= compute_strides(reduced_shape)
+
+	idx := idx
+	for d in 0..<Nd{
+		pos[d] = idx /strides[d] 
+		idx %=strides[d]
+	}
+
+	return pos
+}
+
+
+extract_linear_array :: proc(
+	mdarray: MdArray($T, $Nd),
+	result: []T,
+	idx:int, 
+	axis:int,
+	location:= #caller_location,
+) -> (
+	ok: bool
+){
+
+	when ODIN_DEBUG {			
+		validate_initialized(mdarray, location) or_return
+		if len(arr) != mdarray.shape[axis] {
+
+			return
+		}
+	}
+
+	n:= len(result) 
+	last_i := Nd-1
+	if last_i == axis && !mdarray.is_view {
+		copy(result, mdarray.buffer[idx*n:(idx+1)*n])
+	}
+
+	pos := get_reduced_pos(mdarray.shape, idx, axis)
+
+	for i in 0..<n{
+		result[i] = get(mdarray, pos, location) or_return 
+		pos[axis] += 1		
+	}
+
+	return true
+}
+
+
+placein_linear_array :: proc(
+	mdarray: MdArray($T, $Nd),
+	arr: []T,
+	idx:int, 
+	axis:int,
+	location:= #caller_location,
+) -> (
+	ok: bool
+){
+
+	when ODIN_DEBUG {			
+		validate_initialized(mdarray, location) or_return
+		if len(arr) != mdarray.shape[axis] {
+
+			return
+		}
+	}
+
+	n:= len(arr) 
+	last_i := Nd-1
+	if last_i == axis && !mdarray.is_view {
+		copy(mdarray.buffer[idx*n:(idx+1)*n], arr)
+	}
+
+	pos := get_reduced_pos(mdarray.shape, idx, axis)
+
+	val : ^T
+	for i in 0..<n{
+		val = get_ref(mdarray, pos, location) or_return 
+		val^ = arr[i]
+		pos[axis] += 1		
+	}
+
+	return true
+}
+
+
 get_linear_ref :: #force_inline proc(
 	mdarray : MdArray($T, $Nd),
 	idx:int,

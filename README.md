@@ -10,6 +10,26 @@ It is heavily inspired by the [Numpy](https://github.com/numpy/numpy) python lib
 - Various mathimatical procedures. 
 - Basic linear algebra procedures.
 
+## Usage
+You can simply use Nuod by copying the "nuod" folder in this repository. However, the following dependencies need to be installed:
+- OpenBlas
+
+To get the dependencies you may follow:
+### Windows
+To use Nuod with windows, you may use the release version.
+
+### Linux
+
+#### Debian-based
+```
+  sudo apt install openblas openblas-devel
+```
+
+#### Fedora-based 
+```
+  sudo dnf install openblas openblas-devel
+```
+
 ## Simple Example
 
 ```odin
