@@ -1,4 +1,6 @@
-# Nuod
+<img width="1391" height="381" alt="Nuod_6" src="https://github.com/user-attachments/assets/ac089a34-46d7-4a3c-8b9a-c77f35777627" />
+
+-----
 Nuod (Numerical Odin) is an [Odin](https://odin-lang.org/) library for creating and manipulating numerical multi-dimensional arrays. 
 It is heavily inspired by the [Numpy](https://github.com/numpy/numpy) python library.
 
