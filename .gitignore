@@ -60,3 +60,4 @@ vendors/openblas
 libopenblas.dll
 odin-doc
 doc.odin-doc
+website/*
