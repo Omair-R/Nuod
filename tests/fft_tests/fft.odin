@@ -1,5 +1,6 @@
 package fft_tests
 
+import "core:log"
 import "core:math/rand"
 import md "../../nuod/mdarray"
 import nfft "../../nuod/fft"
@@ -79,3 +80,4 @@ test_fft :: proc(t: ^testing.T){
 
 	}
 }
+

@@ -119,7 +119,11 @@ extract_linear_array :: proc(
 	when ODIN_DEBUG {			
 		validate_initialized(mdarray, location) or_return
 		if len(arr) != mdarray.shape[axis] {
-
+			logging.error(
+				.ArguementError,
+				"length of provided slice is inconsistant with the source array.",
+				location = location
+			)
 			return
 		}
 	}
@@ -154,6 +158,11 @@ placein_linear_array :: proc(
 	when ODIN_DEBUG {			
 		validate_initialized(mdarray, location) or_return
 		if len(arr) != mdarray.shape[axis] {
+			logging.error(
+				.ArguementError,
+				"length of provided slice is inconsistant with the destination array.",
+				location = location
+			)
 
 			return
 		}

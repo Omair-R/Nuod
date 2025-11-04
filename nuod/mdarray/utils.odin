@@ -77,3 +77,32 @@ validate_shape_match :: proc(a: MdArray($T, $Nd), b: MdArray($S, Nd), location:=
 
 	return true
 }
+
+validate_axis :: #force_inline proc(ndims: int, axis: int, location:=#caller_location) -> bool {
+	if axis >= ndims || axis < 0 {
+		logging.error(
+			.ArguementError,
+			"The axis should not be bigger than the number of dimensions.",
+			location = location
+		)
+		return false
+	}
+	return true
+}
+
+validate_axes :: #force_inline proc($Nd: int, axes: [$Md]int, location:=#caller_location) -> bool {		
+	unique : [Nd]int
+	for axis in axes {
+		if !validate_axis(Nd, axis, location) do return false
+		if unique[axis] == 0 do unique[axis] = 1
+		else {
+			logging.error(
+				.ArguementError,
+				"Axes must be unique.",
+				location = location
+			)
+			return false
+		}
+	}
+	return true
+}
