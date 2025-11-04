@@ -1,0 +1,65 @@
+name: Deploy static content to Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Odin
+        run: |
+          sudo apt-get install llvm-14 clang-14
+          cd /home/runner
+          git clone https://github.com/odin-lang/Odin
+          cd Odin
+          make
+          echo "/home/runner/Odin" >> $GITHUB_PATH
+      - name: Get commonmark
+        run: sudo apt-get install libcmark-dev
+
+      - name: Get and build Odin docs generator
+        run: |
+          cd /home/runner
+          mkdir odin-doc
+          git clone https://github.com/Omair-R/pkg_odin.git odin-doc
+          cd odin-doc
+          # The /home/runner/odin directory is in the PATH so output it there.
+          odin build . -out:/home/runner/Odin/odin-doc
+          cd /home/runner
+      - uses: actions/checkout@v4
+
+      - name: Generate documentation
+        run: |
+          cd website
+          rm -rf static
+          mkdir static
+          # Generate the .odin-doc file.
+          cd ..
+          odin doc doc.odin -file -all-packages -doc-format
+          # Generate the website using the .odin-doc and the custom configuration.
+          cd website
+          odin-doc ../doc.odin-doc ../doc_config.json
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./website
+
+      - uses: actions/deploy-pages@v4
+        id: deployment
