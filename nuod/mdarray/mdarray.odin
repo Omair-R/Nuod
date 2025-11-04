@@ -9,6 +9,20 @@ import "core:math"
 import "core:slice"
 
 
+/*
+A structure that represents a multi-dimensional array. it stores all data in a singular
+slice. The dimensionality of the array is decided based on the shape field. To traverse
+the array an array of strides is precomputed based on the shape of the array.
+
+This structure does not now allows own the data in its buffer. If that's the case, then
+it's is called a view. Views may have shapes and strides that don't corresbond to the
+buffer length, typically because the view narrows the array or the shape of the arry
+has been permutated. How these fields are managed should not concern the user, as they
+are handled internally by Nuod.
+
+CAUTION: do not create instances of this structure manually. Used the make_mdarray
+procedure instead. It ensures that the array is valid and can be traversed correctly.
+*/
 MdArray :: struct($T: typeid, $Nd: int) {
 	buffer:  []T,
 	shape:   [Nd]int,
@@ -21,10 +35,30 @@ MdArray :: struct($T: typeid, $Nd: int) {
 }
 
 
+/*
+Retrives the number of dimensions of the array.
+
+Inputs:
+- mdarray: a multidimsional array of any internal type.
+
+Returns:
+- number of dimensions.
+*/
 ndim :: proc(mdarray: MdArray($T, $Nd)) -> int {
 	return Nd
 }
 
+
+/*
+Retrives the total number of elements in the array. If the array is a view,
+it will only retrive the number of viewed elements only.
+
+Inputs:
+- mdarray: a multidimsional array of any internal type.
+
+Returns:
+- number of elements.
+*/
 size :: proc(mdarray: MdArray($T, $Nd)) -> int {
 	if mdarray.is_view {
 		size:= 1
@@ -36,19 +70,69 @@ size :: proc(mdarray: MdArray($T, $Nd)) -> int {
 	return len(mdarray.buffer)
 }
 
+
+/*
+Retrives the internal slice of the array. It does not care if the array is a view
+it will retrieve the original buffer. Do not abuse it. If you need a flattened view
+or copy of an array use the flatten_view or flatten_copy procedures, respectively.
+
+Inputs:
+- mdarray: a multidimsional array of any internal type.
+
+Returns:
+- the original slice buffer.
+*/
+
 ravel :: proc(mdarray: MdArray($T, $Nd)) -> []T {
 	return mdarray.buffer[:]
 }
 
+
+/*
+Retrives the internal type of the array.
+
+Inputs:
+- mdarray: a multidimsional array of any internal type.
+
+Returns:
+- the array's internal type.
+*/
 get_type :: proc(mdarray: MdArray($T, $Nd)) -> typeid {
 	return T
 }
+
+
+/*
+Checks if the internal buffer of the array is empty.
+
+Inputs:
+- mdarray: a multidimsional array of any internal type.
+
+Returns:
+- a boolean signifying that the array is empty.
+*/
 
 is_none :: proc(mdarray: MdArray($T, $Nd)) -> bool {
 	return slice.is_empty(mdarray.buffer)
 }
 
 
+/*
+Properly creates an instance of a multi-dimensional array based on the provided
+type and shape. The values are not assigned and will therefore follow the zero-value
+of the provided type.
+
+
+Inputs:
+- T: the type of the array to be created.
+- shape: an Odin array that holds the shape of the created multi-dimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: The created multi-dimensional array.
+- ok: an optional boolean for error handling.
+*/
 make_mdarray :: proc(
 	$T: typeid,
 	shape: [$Nd]int,
@@ -77,7 +161,20 @@ make_mdarray :: proc(
 	return mdarray, true
 }
 
+/*
+Frees the internal memory of the array. The provided array will become empty. You sould
+no longer use a freed array.
 
+NOTE: This procedure will skip a view array. A warning will be logged as a reminder.
+
+Inputs:
+- mdarray: a multidimsional array of any internal type.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- allocation error value. .None implies that no error has occured.
+*/
 free_mdarray :: proc(
 	mdarray: MdArray($T, $Nd),
 	allocator := context.allocator,
@@ -97,6 +194,23 @@ free_mdarray :: proc(
 }
 
 
+/*
+Create a multi-dimensional array from an Odin slice. The size of the array and the
+shape provided have to be compatible. In other words the total size of the array should
+be equal to the multiple of all dimensions in the shape.
+
+NOTE: this procedure will create a copy of the provided slice. It does not create a view.
+
+Inputs:
+- sl: the slice from which the array will be created.
+- shape: the shape of the multi-dimensional array. Must be compatible with the size of the slice.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: a multidimsional array with same type as the provided slice.
+- ok: an optional boolean for error handling.
+*/
 from_slice :: proc(
 	sl: []$T,
 	shape: [$Nd]int,
@@ -124,6 +238,22 @@ from_slice :: proc(
 }
 
 
+/*
+Create a multi-dimensional array based on the provided shape, whose elements are filled
+with the provided value.
+
+NOTE: the internal type of the array corresponds to the type of the provided value.
+
+Inputs:
+- value: the value based on which the array will be filled 
+- shape: the shape of the multi-dimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: a multidimsional array filled with the provided value.
+- ok: an optional boolean for error handling.
+*/
 fills :: proc(
 	value: $T,
 	shape: [$Nd]int,
@@ -146,6 +276,21 @@ fills :: proc(
 }
 
 
+/*
+Create a multi-dimensional array with an identical shape to another array, whose elements
+are filled with the provided value.
+
+Inputs:
+- value: the value based on which the array will be filled 
+- source: the array based on which the shape of the created array is decided. Its internal
+type doesn't matter. The created array will follow the type of the provided value instead.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: a multidimsional array filled with the provided value.
+- ok: an optional boolean for error handling.
+*/
 fills_like :: proc(
 	value: $T,
 	source: MdArray($S, $Nd),
@@ -160,6 +305,19 @@ fills_like :: proc(
 }
 
 
+/*
+Create a multi-dimensional array based on the provided shape, whose elements are all zero.
+
+Inputs:
+- T: the type of created array. 
+- shape: the shape of the multi-dimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: a multidimsional array filled with zeros.
+- ok: an optional boolean for error handling.
+*/
 zeros :: proc(
 	$T: typeid,
 	shape: [$Nd]int,
@@ -169,11 +327,29 @@ zeros :: proc(
 	mdarray: MdArray(T, Nd),
 	ok: bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	mdarray, ok = fills(cast(T)0, shape, allocator, location = location)
-	return 
+	when intrinsics.type_is_complex(T){
+		return fills(complex(0, 0), shape, allocator, location = location)
+	} else {
+		return fills(cast(T)0, shape, allocator, location = location)
+	}
 }
 
 
+/*
+Create a multi-dimensional array with an identical shape to another array, whose elements
+are all with zeros.
+
+Inputs:
+- T: the type of created array. 
+- source: the array based on which the shape of the created array is decided. Its internal
+type doesn't matter. The created array will follow the type above.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: a multidimsional array filled with zeros.
+- ok: an optional boolean for error handling.
+*/
 zeros_like :: proc(
 	$T: typeid,
 	source: MdArray($S, $Nd),
@@ -183,11 +359,27 @@ zeros_like :: proc(
 	mdarray: MdArray(T, Nd),
 	ok: bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	mdarray, ok = fills(cast(T)0, source.shape, allocator, location = location)
-	return 
+	when intrinsics.type_is_complex(T){
+		return fills(complex(0, 0), source.shape, allocator, location = location)
+	} else {
+		return fills(cast(T)0, source.shape, allocator, location = location)
+	}
 }
 
 
+/*
+Create a multi-dimensional array based on the provided shape, whose elements are all ones.
+
+Inputs:
+- T: the type of created array. 
+- shape: the shape of the multi-dimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: a multidimsional array filled with ones.
+- ok: an optional boolean for error handling.
+*/
 ones :: proc(
 	$T: typeid,
 	shape: [$Nd]int,
@@ -197,11 +389,29 @@ ones :: proc(
 	mdarray: MdArray(T, Nd),
 	ok: bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	mdarray, ok = fills(cast(T)1, shape, allocator, location = location)
-	return 
+	when intrinsics.type_is_complex(T){
+		return fills(complex(1, 0), shape, allocator, location = location)
+	} else {
+		return fills(cast(T)1, shape, allocator, location = location)
+	}
 }
 
 
+/*
+Create a multi-dimensional array with an identical shape to another array, whose elements
+are all with ones.
+
+Inputs:
+- T: the type of created array. 
+- source: the array based on which the shape of the created array is decided. Its internal
+type doesn't matter. The created array will follow the type above.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: a multidimsional array filled with ones.
+- ok: an optional boolean for error handling.
+*/
 ones_like :: proc(
 	$T: typeid,
 	source: MdArray($S, $Nd),

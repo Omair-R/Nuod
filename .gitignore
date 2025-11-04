@@ -58,3 +58,5 @@ dkms.conf
 main.odin
 vendors/openblas
 libopenblas.dll
+odin-doc
+doc.odin-doc

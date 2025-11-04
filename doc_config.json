@@ -1,0 +1,21 @@
+{
+	"hide_core": true,
+	"hide_base": true,
+	"url_prefix": "/Nuod",
+	"collections": {
+		"ooura": {
+			"name": "Nuod",
+			"source_url": "https://github.com/Omair-R/Nuod/tree/main/nuod",
+			"base_url": "/nuod",
+			"root_path": "../nuod",
+			"license": {
+				"text": "BSD-3-Clause",
+				"url": "https://github.com/Omair-R/Nuod/blob/main/LICENSE"
+			},
+			"home": {
+				"title": "Nuod",
+				"embed_readme": "../README.md"
+			}
+		}
+	}
+}
