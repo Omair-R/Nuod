@@ -132,24 +132,33 @@ any :: proc(
 
 @(private = "file")
 inner_is_close :: #force_inline proc($T: typeid) -> (
-	proc(_: T, _: T, _: ..T) -> bool,
+	proc(_: T, _: T, _: ..f64) -> bool,
 ) where intrinsics.type_is_float(T) {
-	return #force_inline proc(a: T, b: T, args: ..T) -> bool {
-		return abs(a - b) <= (args[1] + args[0] * abs(b)) // args[0] is rtol - args[1] is atol
+	return #force_inline proc(a: T, b: T, args: ..f64) -> bool {
+		return f64(abs(a - b)) <= (args[1] + args[0] * f64(abs(b))) // args[0] is rtol - args[1] is atol
 	}
 }
 
+@(private = "file")
+inner_is_close_c :: #force_inline proc($T: typeid) -> (
+	proc(_: T, _: T, _: ..f64) -> bool,
+) where intrinsics.type_is_complex(T) {
+	return #force_inline proc(a: T, b: T, args: ..f64) -> bool {
+		return f64(abs(real(a) - real(b))) <= (args[1] + args[0] * f64(abs(real(b)))) &&
+			   f64(abs(imag(a) - imag(b))) <= (args[1] + args[0] * f64(abs(imag(b)))) // args[0] is rtol - args[1] is atol
+	}
+}
 
 get_default_tol :: #force_inline proc "contextless"($T: typeid) -> (
-	rtol, atol: T,
+	rtol, atol: f64,
 	ok: bool,
 ){
 	when T == f32 || T == f64 || T == complex64 || T==complex128 {
-		rtol = T(1e-7)
-		atol = T(1e-8)
+		rtol = f64(1e-7)
+		atol = f64(1e-8)
 	} else when T == f16 || T == complex32 {
-		rtol = T(1e-3)
-		atol = T(1e-4)
+		rtol = f64(1e-3)
+		atol = f64(1e-4)
 	} else {
 		logging.error(
 			.ArguementError,
@@ -184,8 +193,8 @@ is_close_default :: proc(
 is_close_with_args :: proc(	
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
-	rtol: T,
-	atol: T, 
+	rtol: f64,
+	atol: f64, 
 	allocator:= context.allocator,
 	location := #caller_location,
 ) -> (
@@ -197,7 +206,11 @@ is_close_with_args :: proc(
 
 	validate_shape_match(a, b, location=location) or_return
 
-	return element_wise_map(a, b, inner_is_close(T), rtol, atol, allocator=allocator, location=location)
+	when intrinsics.type_is_complex(T) {
+		return element_wise_map(a, b, inner_is_close_c(T), rtol, atol, allocator=allocator, location=location)
+	} else {
+		return element_wise_map(a, b, inner_is_close(T), rtol, atol, allocator=allocator, location=location)
+	}
 }
 
 
@@ -219,8 +232,8 @@ all_close_default :: proc(
 all_close_with_args :: proc(	
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
-	rtol: T,
-	atol: T, 
+	rtol: f64,
+	atol: f64, 
 	location := #caller_location,
 ) -> (
 	 result: bool,
@@ -232,7 +245,11 @@ all_close_with_args :: proc(
 
 	validate_shape_match(a, b, location=location) or_return
 
-	is_close_unwrapped := inner_is_close(T)
+	when intrinsics.type_is_complex(T) {
+		is_close_unwrapped := inner_is_close_c(T)
+	} else {
+		is_close_unwrapped := inner_is_close(T)
+	}
 
 	for i in 0..<size(a){
 		a_val := get_linear(a, i)

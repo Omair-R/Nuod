@@ -64,6 +64,8 @@ fft_vector :: proc(
 	ok: bool,
 ) where intrinsics.type_is_complex(T) #optional_ok{
 
+	md.validate_initialized(mdarray, location) or_return
+
 	result = md.copy_array(mdarray, allocator, location) or_return
 
 	if inverse {
@@ -105,6 +107,7 @@ fft_with_axes :: proc(
 	ok: bool,
 ) where intrinsics.type_is_complex(T) && Nd>1 #optional_ok{
 	
+	md.validate_initialized(mdarray, location) or_return
 	md.validate_axis(Nd, axis, location) or_return
 
 	w_arr, err := make([]T, mdarray.shape[axis], allocator, location)
@@ -216,7 +219,7 @@ fft2d_with_axes :: proc(
 ) where intrinsics.type_is_complex(T) && Nd>=2 #optional_ok{
 
 	md.validate_axes(Nd, axes, location) or_return
-	// first pass done horizontally. 
+	
 	result = fft_with_axes(mdarray, axes[0], inverse, allocator, location) or_return
 	fft_pass_inplace(result, axes[1], inverse, allocator, location)
 	return result, true
@@ -248,7 +251,6 @@ fftnd_default :: proc(
 }
 
 
-// TODO: verfiy axes
 fftnd_with_axes :: proc(
 	mdarray: md.MdArray($T, $Nd),
 	axes : [$Md]int,
@@ -261,7 +263,7 @@ fftnd_with_axes :: proc(
 ) where intrinsics.type_is_complex(T) && Nd>=2 && Md >=1 && Md <= Nd #optional_ok{
 
 	md.validate_axes(Nd, axes, location) or_return
-	// first pass done horizontally. 
+	
 	result = fft_with_axes(mdarray, axes[0], inverse, allocator, location) or_return
 
 	for d in 1..<Md {

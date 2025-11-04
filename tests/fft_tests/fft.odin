@@ -81,3 +81,73 @@ test_fft :: proc(t: ^testing.T){
 	}
 }
 
+
+// TODO: this is only a tempurary test, Need a better test against naive DFT instea.
+@test
+test_fft2d :: proc(t: ^testing.T){
+
+	{
+		arr := md.from_slice([]complex128{
+			complex(1, 0),complex(2, 0),complex(3, 0),complex(4, 0),
+			complex(5, 0),complex(6, 0),complex(7, 0),complex(8, 0) 
+		}, [2]int{2, 4})
+		defer md.free_mdarray(arr)
+
+		
+		arr_f_ := md.from_slice([]complex128{
+			complex(36, 0),complex(-4, 4),complex(-4, 0),complex(-4, -4),
+			complex(-16, 0),complex(0, 0),complex(0, 0),complex(0, 0) 
+		}, [2]int{2, 4})
+		defer md.free_mdarray(arr_f_)
+
+		arr_f := nfft.fft2d(arr)
+		defer md.free_mdarray(arr_f)
+
+		arr_ := nfft.fft2d(arr_f, true)
+		defer md.free_mdarray(arr_)
+
+
+		close := md.all_close(arr_f, arr_f_)
+		testing.expect(t, close)
+
+		close = md.all_close(arr, arr_)
+		testing.expect(t, close)
+	}
+}
+
+
+@test
+test_fftnd :: proc(t: ^testing.T){
+
+	{
+		arr := md.from_slice([]complex128{
+			complex(1, 0),complex(2, 0),complex(3, 0),complex(4, 0),
+			complex(5, 0),complex(6, 0),complex(7, 0),complex(8, 0),
+			complex(2, 0),complex(1, 0),complex(2, 0),complex(4, 0),
+			complex(5, 0),complex(6, 0),complex(7, 0),complex(8, 0) 
+		}, [3]int{2, 2, 4})
+		defer md.free_mdarray(arr)
+
+		
+		arr_f_ := md.from_slice([]complex128{
+			complex(71, 0),complex(-6, 9),complex(-7, 0),complex(-6, -9),
+			complex(-33, 0),complex(2, 1),complex(1, 0),complex(2, -1),
+			complex(1, 0),complex(-2, -1),complex(-1, 0),complex(-2, 1),
+			complex(1, 0),complex(-2, -1),complex(-1, 0),complex(-2, 1) 
+		}, [3]int{2, 2, 4})
+		defer md.free_mdarray(arr_f_)
+
+		arr_f := nfft.fftnd(arr)
+		defer md.free_mdarray(arr_f)
+
+		arr_ := nfft.fftnd(arr_f, true)
+		defer md.free_mdarray(arr_)
+
+		close := md.all_close(arr_f, arr_f_)
+		testing.expect(t, close)
+
+		close = md.all_close(arr, arr_)
+		testing.expect(t, close)
+
+	}
+}
