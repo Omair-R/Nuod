@@ -6,6 +6,22 @@ import "core:math"
 
 import "../logging"
 
+
+
+/*
+Reduce all elements in an array to a singular value according to a binary operator.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a binary procedure with arguments.
+- initial: the initial value to reduce over. 
+- args: the aguments to be provided to the binary operator f.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced final scalar value.
+- ok: an optional boolean for error handling.
+*/
 all_reduce_map :: proc(
 	mdarray: MdArray($T, $Nd),
 	f: proc(T, T, ..T) -> T,
@@ -25,7 +41,23 @@ all_reduce_map :: proc(
 	return accum, true
 }
 
-// First args is always the size of the of the axis dim.
+/*
+Reduce all elements along a certain dimension according a custom binary operator.
+
+Inputs:
+- Nd: the inital number of dimension for the provided array.
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- f: a binary procedure with arguments.
+- initial: the initial value to reduce over. 
+- args: the aguments to be provided to the binary operator f.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the reduced reduced array.
+- ok: an optional boolean for error handling.
+*/
 dim_reduce_map :: proc(
 	$Nd: int,
 	mdarray: MdArray($T, Nd),
@@ -81,6 +113,24 @@ dim_reduce_map :: proc(
 }
 
 
+/*
+Reduce all elements along a certain dimension according a custom binary operator. Insures
+the reduce dimension is not discarded. 
+
+Inputs:
+- Nd: the inital number of dimension for the provided array.
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- f: a binary procedure with arguments.
+- initial: the initial value to reduce over. 
+- args: the aguments to be provided to the binary operator f.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the reduced reduced array.
+- ok: an optional boolean for error handling.
+*/
 keepdim_reduce_map :: proc(
 	$Nd: int,
 	mdarray: MdArray($T, Nd),
@@ -140,6 +190,20 @@ inner_avg :: #force_inline proc($T: typeid)-> proc(T, T,..T)->T{
 	return #force_inline proc (accum: T, val: T, args: ..T) -> T { return accum + (val/args[0])}
 }
 
+
+/*
+Reduce all elements in an array to their sum value. takes no initial value.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced final scalar value.
+- ok: an optional boolean for error handling.
+*/
 all_reduce_sum_no_init :: proc(	
 	mdarray: MdArray($T, $Nd),
 	location := #caller_location,
@@ -149,6 +213,21 @@ all_reduce_sum_no_init :: proc(
 	return all_reduce_map(mdarray, inner_sum(T), cast(T)0, location=location)
 }
 
+
+/*
+Reduce all elements in an array to their sum value. takes an initial value.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array.
+- initial: the initial value to reduce over. 
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced final scalar value.
+- ok: an optional boolean for error handling.
+*/
 all_reduce_sum_with_init :: proc(	
 	mdarray: MdArray($T, $Nd),
 	initial:T,
@@ -161,6 +240,20 @@ all_reduce_sum_with_init :: proc(
 
 all_reduce_sum :: proc{all_reduce_sum_no_init, all_reduce_sum_with_init}
 
+
+/*
+Reduce all elements in an array to their produce. takes no initial value.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced final scalar value.
+- ok: an optional boolean for error handling.
+*/
 all_reduce_prod_no_init :: proc(	
 	mdarray: MdArray($T, $Nd),
 	location := #caller_location,
@@ -170,7 +263,20 @@ all_reduce_prod_no_init :: proc(
 	return all_reduce_map(mdarray, inner_prod(T), cast(T)1, location=location)
 }
 
+/*
+Reduce all elements in an array to their produce. takes an initial value.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array.
+- initial: the initial value to reduce over. 
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced final scalar value.
+- ok: an optional boolean for error handling.
+*/
 all_reduce_prod_with_init :: proc(	
 	mdarray: MdArray($T, $Nd),
 	initial:T,
@@ -185,6 +291,17 @@ all_reduce_prod_with_init :: proc(
 all_reduce_prod :: proc{all_reduce_prod_no_init, all_reduce_prod_with_init}
 
 
+/*
+Reduce all elements in an array to their minimum value.
+
+Inputs:
+- mdarray: a multidimensional array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced final scalar value.
+- ok: an optional boolean for error handling.
+*/
 all_reduce_min :: proc(	
 	mdarray: MdArray($T, $Nd),
 	location := #caller_location,
@@ -196,6 +313,17 @@ all_reduce_min :: proc(
 }
 
 
+/*
+Reduce all elements in an array to their maximum value.
+
+Inputs:
+- mdarray: a multidimensional array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced final scalar value.
+- ok: an optional boolean for error handling.
+*/
 all_reduce_max :: proc(	
 	mdarray: MdArray($T, $Nd),
 	location := #caller_location,
@@ -207,6 +335,17 @@ all_reduce_max :: proc(
 }
 
 
+/*
+Reduce all elements in an array to their average value.
+
+Inputs:
+- mdarray: a multidimensional array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced final scalar value.
+- ok: an optional boolean for error handling.
+*/
 all_reduce_avg :: proc(	
 	mdarray: MdArray($T, $Nd),
 	location := #caller_location,
@@ -218,6 +357,20 @@ all_reduce_avg :: proc(
 }
 
 
+/*
+Reduce all elements along a certain dimension to their sum value. Takes no inital value.
+
+Inputs:
+- Nd: the inital number of dimension for the provided array.
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 dim_reduce_sum_no_init :: proc(
 	$Nd :int,
 	mdarray: MdArray($T, Nd),
@@ -231,6 +384,21 @@ dim_reduce_sum_no_init :: proc(
 }
 
 
+/*
+Reduce all elements along a certain dimension to their sum value. Takes an inital value.
+
+Inputs:
+- Nd: the inital number of dimension for the provided array.
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- initial: the initail value to reduce over.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 dim_reduce_sum_with_init :: proc(
 	$Nd :int,
 	mdarray: MdArray($T, Nd),
@@ -247,6 +415,20 @@ dim_reduce_sum_with_init :: proc(
 dim_reduce_sum :: proc{dim_reduce_sum_no_init, dim_reduce_sum_with_init}
 
 
+/*
+Reduce all elements along a certain dimension to their produce. Takes no inital value.
+
+Inputs:
+- Nd: the inital number of dimension for the provided array.
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 dim_reduce_prod_no_init :: proc(
 	$Nd :int,
 	mdarray: MdArray($T, Nd),
@@ -260,6 +442,21 @@ dim_reduce_prod_no_init :: proc(
 }
 
 
+/*
+Reduce all elements along a certain dimension to their sum value. Takes an inital value.
+
+Inputs:
+- Nd: the inital number of dimension for the provided array.
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- initial: the initail value to reduce over.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 dim_reduce_prod_with_init :: proc(
 	$Nd :int,
 	mdarray: MdArray($T, Nd),
@@ -276,6 +473,20 @@ dim_reduce_prod_with_init :: proc(
 dim_reduce_prod :: proc{dim_reduce_prod_no_init, dim_reduce_prod_with_init}
 
 
+/*
+Reduce all elements along a certain dimension to their minimum value.
+
+Inputs:
+- Nd: the inital number of dimension for the provided array.
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 dim_reduce_min :: proc(
 	$Nd :int,
 	mdarray: MdArray($T, Nd),
@@ -290,6 +501,20 @@ dim_reduce_min :: proc(
 }
 
 
+/*
+Reduce all elements along a certain dimension to their maximum value.
+
+Inputs:
+- Nd: the inital number of dimension for the provided array.
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 dim_reduce_max :: proc(
 	$Nd :int,
 	mdarray: MdArray($T, Nd),
@@ -304,6 +529,20 @@ dim_reduce_max :: proc(
 }
 
 
+/*
+Reduce all elements along a certain dimension to their average value.
+
+Inputs:
+- Nd: the inital number of dimension for the provided array.
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 dim_reduce_avg :: proc(
 	$Nd :int,
 	mdarray: MdArray($T, Nd),
@@ -317,6 +556,20 @@ dim_reduce_avg :: proc(
 }
 
 
+/*
+Reduce all elements along a certain dimension to their sum while keeping the dimension.
+Takes no inital value.
+
+Inputs:
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 keepdim_reduce_sum_no_init :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis:int,
@@ -344,6 +597,20 @@ keepdim_reduce_sum_with_init :: proc(
 keepdim_reduce_sum :: proc{keepdim_reduce_sum_no_init, keepdim_reduce_sum_with_init}
 
 
+/*
+Reduce all elements along a certain dimension to their produce while keeping the dimension.
+Takes no inital value.
+
+Inputs:
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 keepdim_reduce_prod_no_init :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis:int,
@@ -372,6 +639,20 @@ keepdim_reduce_prod :: proc{keepdim_reduce_prod_no_init, keepdim_reduce_prod_wit
 
 
 
+/*
+Reduce all elements along a certain dimension to their minimum value while keeping
+the dimension.
+
+Inputs:
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 keepdim_reduce_min :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis:int,
@@ -385,6 +666,20 @@ keepdim_reduce_min :: proc(
 }
 
 
+/*
+Reduce all elements along a certain dimension to their maximum value while keeping
+the dimension.
+
+Inputs:
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 keepdim_reduce_max :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis:int,
@@ -398,6 +693,20 @@ keepdim_reduce_max :: proc(
 }
 
 
+/*
+Reduce all elements along a certain dimension to their average value while keeping
+the dimension.
+
+Inputs:
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: the reduced array.
+- ok: an optional boolean for error handling.
+*/
 keepdim_reduce_avg :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis:int,
