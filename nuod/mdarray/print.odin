@@ -4,6 +4,7 @@ import "core:os"
 import "core:fmt"
 import "core:slice"
 
+@private
 _fprint_2d ::proc(
 	handle: os.Handle,
 	mdarray :MdArray($T, $Nd),
@@ -46,7 +47,7 @@ _fprint_2d ::proc(
 	fmt.fprint(handle, "]", flush=flush)
 }
 
-
+@private
 _fprint_inner :: proc(
 	handle: os.Handle,
 	mdarray :MdArray($T, $Nd),

@@ -3,6 +3,7 @@ import cblas "../cblas"
 import "base:intrinsics"
 
 
+@private
 cblas_real_norm2_wrapper :: proc (x: []$T) -> (
 	result: T,
 	ok: bool,
@@ -33,6 +34,7 @@ cblas_real_norm2_wrapper :: proc (x: []$T) -> (
 }
 
 
+@private
 cblas_cmplx_norm2_wrapper :: proc (x: []$T, $R: typeid) -> (
 	result: R,
 	ok: bool,
@@ -62,6 +64,7 @@ cblas_cmplx_norm2_wrapper :: proc (x: []$T, $R: typeid) -> (
 }
 
 
+@private
 cblas_real_norm1_wrapper :: proc (x: []$T) -> (
 	result: T,
 	ok: bool,
@@ -92,6 +95,7 @@ cblas_real_norm1_wrapper :: proc (x: []$T) -> (
 }
 
 
+@private
 cblas_cmplx_norm1_wrapper :: proc (x: []$T, $R: typeid) -> (
 	result: R,
 	ok: bool,
@@ -121,6 +125,7 @@ cblas_cmplx_norm1_wrapper :: proc (x: []$T, $R: typeid) -> (
 }
 
 
+@private
 cblas_real_norminfty_wrapper :: proc (x: []$T) -> (
 	result: T,
 	ok: bool,
@@ -151,6 +156,7 @@ cblas_real_norminfty_wrapper :: proc (x: []$T) -> (
 }
 
 
+@private
 cblas_cmplx_norminfty_wrapper :: proc (x: []$T, $R: typeid) -> (
 	result: R,
 	ok: bool,
@@ -180,6 +186,7 @@ cblas_cmplx_norminfty_wrapper :: proc (x: []$T, $R: typeid) -> (
 }
 
 
+@private
 cblas_dot_wrapper :: proc (x: []$T, y: []T) -> (
 	result: T,
 	ok: bool,
@@ -240,6 +247,7 @@ cblas_dot_wrapper :: proc (x: []$T, y: []T) -> (
 }
 	
 
+@private
 cblas_matvec_wrapper :: proc (
 	a:[]$T, v:[]T,
 	m, n: cblas.blasint,
@@ -355,6 +363,7 @@ cblas_matvec_wrapper :: proc (
 }
 
 
+@private
 cblas_matmul_wrapper :: proc (
 	a: []$T, b: []T,
 	m, n, k: cblas.blasint,

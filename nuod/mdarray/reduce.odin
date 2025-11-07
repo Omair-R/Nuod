@@ -360,6 +360,8 @@ all_reduce_avg :: proc(
 /*
 Reduce all elements along a certain dimension to their sum value. Takes no inital value.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
 Inputs:
 - Nd: the inital number of dimension for the provided array.
 - mdarray: a multidimensional array.
@@ -386,6 +388,8 @@ dim_reduce_sum_no_init :: proc(
 
 /*
 Reduce all elements along a certain dimension to their sum value. Takes an inital value.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
 
 Inputs:
 - Nd: the inital number of dimension for the provided array.
@@ -418,6 +422,8 @@ dim_reduce_sum :: proc{dim_reduce_sum_no_init, dim_reduce_sum_with_init}
 /*
 Reduce all elements along a certain dimension to their produce. Takes no inital value.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
 Inputs:
 - Nd: the inital number of dimension for the provided array.
 - mdarray: a multidimensional array.
@@ -444,6 +450,8 @@ dim_reduce_prod_no_init :: proc(
 
 /*
 Reduce all elements along a certain dimension to their sum value. Takes an inital value.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
 
 Inputs:
 - Nd: the inital number of dimension for the provided array.
@@ -560,6 +568,8 @@ dim_reduce_avg :: proc(
 Reduce all elements along a certain dimension to their sum while keeping the dimension.
 Takes no inital value.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
 Inputs:
 - mdarray: a multidimensional array.
 - axis: the axis along which reduction occurs.
@@ -581,7 +591,23 @@ keepdim_reduce_sum_no_init :: proc(
 	return keepdim_reduce_map(Nd, mdarray, axis, inner_sum(T), cast(T)0, allocator=allocator, location=location)
 }
 
+/*
+Reduce all elements along a certain dimension to their sum while keeping the dimension.
+Takes an inital value.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- initial: the initial value to reduce over. 
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the reduced reduced array.
+- ok: an optional boolean for error handling.
+*/
 keepdim_reduce_sum_with_init :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis:int,
@@ -600,6 +626,8 @@ keepdim_reduce_sum :: proc{keepdim_reduce_sum_no_init, keepdim_reduce_sum_with_i
 /*
 Reduce all elements along a certain dimension to their produce while keeping the dimension.
 Takes no inital value.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
 
 Inputs:
 - mdarray: a multidimensional array.
@@ -622,7 +650,23 @@ keepdim_reduce_prod_no_init :: proc(
 	return keepdim_reduce_map(Nd, mdarray, axis, inner_prod(T), cast(T)1, allocator=allocator, location=location)
 }
 
+/*
+Reduce all elements along a certain dimension to their product while keeping the dimension.
+Takes an inital value.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array.
+- axis: the axis along which reduction occurs.
+- initial: the initial value to reduce over. 
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the reduced reduced array.
+- ok: an optional boolean for error handling.
+*/
 keepdim_reduce_prod_with_init :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis:int,

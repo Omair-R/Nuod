@@ -3,6 +3,7 @@ package mdarray
 import "../errors"
 import "../logging"
 
+
 swap :: #force_inline proc (a : ^$T, b: ^$S){
 	temp: T = a^
 	a^ = b^

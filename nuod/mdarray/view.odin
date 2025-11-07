@@ -76,7 +76,18 @@ move_through_strides :: #force_inline proc(
 	return to_idx		
 }
 
+/*
+Reduce a one of the dimensions in the provided arrays to 1 and find the corresponding
+position, based on a linear index.
 
+Inputs:
+- shape: shape to reduce.
+- idx: the linear buffer index.
+- axis: the dimension to be reduced.
+
+Returns:
+- pos: computed position.
+*/
 get_reduced_pos :: proc(
 	shape: [$Nd]int,
 	idx:int,
@@ -105,7 +116,20 @@ get_reduced_pos :: proc(
 	return pos
 }
 
+/*
+Extract a contingent slice a long a certain axis based on the argument "idx" which
+indexes the elements of the axis dimension.
 
+Inputs:
+- mdarray: a multidimensional array.
+- result: the output slice to copy values to.
+- idx: the index of the axis dimension sigments.
+- axis: the selected axis dimension.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 extract_linear_array :: proc(
 	mdarray: MdArray($T, $Nd),
 	result: []T,
@@ -116,17 +140,17 @@ extract_linear_array :: proc(
 	ok: bool
 ){
 
-	when ODIN_DEBUG {			
-		validate_initialized(mdarray, location) or_return
-		if len(arr) != mdarray.shape[axis] {
-			logging.error(
-				.ArguementError,
-				"length of provided slice is inconsistant with the source array.",
-				location = location
-			)
-			return
-		}
+		
+	validate_initialized(mdarray, location) or_return
+	if len(result) != mdarray.shape[axis] {
+		logging.error(
+			.ArguementError,
+			"length of provided slice is inconsistant with the source array.",
+			location = location
+		)
+		return
 	}
+
 
 	n:= len(result) 
 	last_i := Nd-1
@@ -144,7 +168,20 @@ extract_linear_array :: proc(
 	return true
 }
 
+/*
+place a contingent slice a long a certain axis based on the argument "idx" which
+indexes the elements of the axis dimension.
 
+Inputs:
+- mdarray: a multidimensional array.
+- arr: the input slice to place a copy of into mdarray.
+- idx: the index of the axis dimension sigments.
+- axis: the selected axis dimension.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 placein_linear_array :: proc(
 	mdarray: MdArray($T, $Nd),
 	arr: []T,
@@ -155,17 +192,15 @@ placein_linear_array :: proc(
 	ok: bool
 ){
 
-	when ODIN_DEBUG {			
-		validate_initialized(mdarray, location) or_return
-		if len(arr) != mdarray.shape[axis] {
-			logging.error(
-				.ArguementError,
-				"length of provided slice is inconsistant with the destination array.",
-				location = location
-			)
+	validate_initialized(mdarray, location) or_return
+	if len(arr) != mdarray.shape[axis] {
+		logging.error(
+			.ArguementError,
+			"length of provided slice is inconsistant with the destination array.",
+			location = location
+		)
 
-			return
-		}
+		return
 	}
 
 	n:= len(arr) 
@@ -186,7 +221,17 @@ placein_linear_array :: proc(
 	return true
 }
 
+/*
+get a reference to the element at the linear index. 
 
+Inputs:
+- mdarray: a multidimensional array.
+- idx: the linear index of an element.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- val: a reference to the selected element.
+*/
 get_linear_ref :: #force_inline proc(
 	mdarray : MdArray($T, $Nd),
 	idx:int,
@@ -204,7 +249,17 @@ get_linear_ref :: #force_inline proc(
 	return &mdarray.buffer[bf_idx]
 }
 
+/*
+get a copy to the element at the linear index. 
 
+Inputs:
+- mdarray: a multidimensional array.
+- idx: the linear index of an element.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- val: a copy to the selected element.
+*/
 get_linear :: #force_inline proc(
 	mdarray : MdArray($T, $Nd),
 	idx:int,
@@ -222,7 +277,18 @@ get_linear :: #force_inline proc(
 	return mdarray.buffer[bf_idx]
 }
 
+/*
+get a copy to the element at provided position. 
 
+Inputs:
+- mdarray: a multidimensional array.
+- pos: the position at which the element is placed.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- val: a copy to the selected element.
+- ok: an optional boolean for error handling.
+*/
 get :: proc(	
 	mdarray: MdArray($T, $Nd),
 	pos: [Nd]int, 
@@ -242,7 +308,18 @@ get :: proc(
 	return val, true 
 }
 
+/*
+get a reference to the element at provided position. 
 
+Inputs:
+- mdarray: a multidimensional array.
+- pos: the position at which the element is placed.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- val: a reference to the selected element.
+- ok: an optional boolean for error handling.
+*/
 get_ref :: proc(	
 	mdarray: MdArray($T, $Nd),
 	pos: [Nd]int, 
@@ -262,7 +339,20 @@ get_ref :: proc(
 	return val, true 
 }
 
+/*
+find a narrow view of an array by reducing the size of a specific dimension. 
 
+Inputs:
+- mdarray: a multidimensional array.
+- axis: the axis dimension to narrow along.
+- begin: the start of the narrowed view.
+- end: the end of the narrowed view.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant view.
+- ok: an optional boolean for error handling.
+*/
 narrow :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis:int,
@@ -307,7 +397,20 @@ narrow :: proc(
 	return result, true
 }
 
+/*
+Create a view of a singular subarray base on the index of the first dimension. 
 
+Inputs:
+- mdarray: a multidimensional array.
+- axis: the axis dimension to narrow along.
+- begin: the start of the narrowed view.
+- end: the end of the narrowed view.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant view.
+- ok: an optional boolean for error handling.
+*/
 slice_view :: proc(
 	$Nd: int,
 	mdarray: MdArray($T, Nd),
@@ -316,7 +419,7 @@ slice_view :: proc(
 ) -> (
 	result:MdArray(T, Nd-1),
 	ok:bool,
-) #optional_ok {
+) where Nd > 1 #optional_ok {
 
 	validate_initialized(mdarray, location) or_return
 

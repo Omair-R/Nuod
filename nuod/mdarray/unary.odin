@@ -6,6 +6,19 @@ import "core:math"
 import "../logging"
 
 
+/*
+Apply a custom unary operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_unary_map :: proc(
 	mdarray: MdArray($T, $Nd),
 	f: proc(^T),
@@ -26,6 +39,17 @@ outplace_unary_map :: proc(
 }
 
 	
+/*
+Apply a custom unary operator to all elements in the array in place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_unary_map :: proc(
 	mdarray: MdArray($T, $Nd),
 	f: proc(^T), 	
@@ -175,6 +199,20 @@ inner_sinc :: #force_inline proc($T: typeid)-> (proc(^T)) where intrinsics.type_
 	}
 }
 
+
+/*
+Apply the sign operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_sign :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -186,7 +224,17 @@ outplace_sign :: proc(
 	return outplace_unary_map(mdarray, inner_sign(T), allocator, location)
 }
 
+/*
+Apply the sign operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_sign :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -197,6 +245,19 @@ inplace_sign :: proc(
 }
 
 
+/*
+Apply the negating operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_neg :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -208,7 +269,17 @@ outplace_neg :: proc(
 	return outplace_unary_map(mdarray, inner_neg(T), allocator, location)
 }
 
+/*
+Apply the negating operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_neg :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -219,6 +290,19 @@ inplace_neg :: proc(
 }
 
 
+/*
+Apply the absolute operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_abs :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -230,7 +314,17 @@ outplace_abs :: proc(
 	return outplace_unary_map(mdarray, inner_abs(T), allocator, location)
 }
 
+/*
+Apply the absolute operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_abs :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -242,6 +336,19 @@ inplace_abs :: proc(
 
 // ----
 
+/*
+Apply the square operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_sq :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -253,7 +360,17 @@ outplace_sq :: proc(
 	return outplace_unary_map(mdarray, inner_sq(T), allocator, location)
 }
 
+/*
+Apply the square operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_sq :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -264,6 +381,19 @@ inplace_sq :: proc(
 }
 
 
+/*
+Apply the square root operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_sqrt :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -275,7 +405,17 @@ outplace_sqrt :: proc(
 	return outplace_unary_map(mdarray, inner_sqrt(T), allocator, location)
 }
 
+/*
+Apply the square root operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_sqrt :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -286,6 +426,19 @@ inplace_sqrt :: proc(
 }
 
 
+/*
+Apply the cube root operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_cbrt :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -297,7 +450,17 @@ outplace_cbrt :: proc(
 	return outplace_unary_map(mdarray, inner_cbrt(T), allocator, location)
 }
 
+/*
+Apply the cube root operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_cbrt :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -308,6 +471,19 @@ inplace_cbrt :: proc(
 }
 
 
+/*
+Apply the exponential operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_exp :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -319,7 +495,17 @@ outplace_exp :: proc(
 	return outplace_unary_map(mdarray, inner_exp(T), allocator, location)
 }
 
+/*
+Apply the exponential operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_exp :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -330,6 +516,19 @@ inplace_exp :: proc(
 }
 
 
+/*
+Apply the exponential operator (base of 2) to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_exp2 :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -341,7 +540,17 @@ outplace_exp2 :: proc(
 	return outplace_unary_map(mdarray, inner_exp2(T), allocator, location)
 }
 
+/*
+Apply the exponential operator (base of 2) to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_exp2 :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -352,6 +561,19 @@ inplace_exp2 :: proc(
 }
 
 
+/*
+Apply the natural logarithm operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_ln :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -363,7 +585,17 @@ outplace_ln :: proc(
 	return outplace_unary_map(mdarray, inner_ln(T), allocator, location)
 }
 
+/*
+Apply the natural logarithm operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_ln :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -374,6 +606,19 @@ inplace_ln :: proc(
 }
 
 
+/*
+Apply the logarithm operator (base of 2) to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_log2 :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -385,7 +630,17 @@ outplace_log2 :: proc(
 	return outplace_unary_map(mdarray, inner_log2(T), allocator, location)
 }
 
+/*
+Apply the logarithm operator (base of 2) to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_log2 :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -396,6 +651,19 @@ inplace_log2 :: proc(
 }
 
 
+/*
+Apply the logarithm operator (base of 10) to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_log10 :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -407,7 +675,17 @@ outplace_log10 :: proc(
 	return outplace_unary_map(mdarray, inner_log10(T), allocator, location)
 }
 
+/*
+Apply the logarithm operator (base of 10) to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_log10 :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -418,6 +696,19 @@ inplace_log10 :: proc(
 }
 
 
+/*
+Apply the natural logarithm operator with one plus to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_log1p :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -429,7 +720,17 @@ outplace_log1p :: proc(
 	return outplace_unary_map(mdarray, inner_log1p(T), allocator, location)
 }
 
+/*
+Apply the natural logarithm operator with one plus to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_log1p :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -440,6 +741,19 @@ inplace_log1p :: proc(
 }
 
 
+/*
+Apply the reciprocal operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_reciprocal :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -451,7 +765,17 @@ outplace_reciprocal :: proc(
 	return outplace_unary_map(mdarray, inner_reciprocal(T), allocator, location)
 }
 
+/*
+Apply the reciprocal operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_reciprocal :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -464,6 +788,19 @@ inplace_reciprocal :: proc(
 
 // -----
 
+/*
+Apply the sine operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_sin :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -475,7 +812,17 @@ outplace_sin :: proc(
 	return outplace_unary_map(mdarray, inner_sin(T), allocator, location)
 }
 
+/*
+Apply the sine operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_sin :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -486,6 +833,19 @@ inplace_sin :: proc(
 }
 
 
+/*
+Apply the cosine operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_cos :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -497,7 +857,17 @@ outplace_cos :: proc(
 	return outplace_unary_map(mdarray, inner_cos(T), allocator, location)
 }
 
+/*
+Apply the cosine operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_cos :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -508,6 +878,19 @@ inplace_cos :: proc(
 }
 
 
+/*
+Apply the tan operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_tan :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -519,7 +902,17 @@ outplace_tan :: proc(
 	return outplace_unary_map(mdarray, inner_tan(T), allocator, location)
 }
 
+/*
+Apply the tan operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_tan :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -530,6 +923,19 @@ inplace_tan :: proc(
 }
 
 
+/*
+Apply the arcsine operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_asin :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -541,7 +947,17 @@ outplace_asin :: proc(
 	return outplace_unary_map(mdarray, inner_asin(T), allocator, location)
 }
 
+/*
+Apply the arcsine operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_asin :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -552,6 +968,19 @@ inplace_asin :: proc(
 }
 
 
+/*
+Apply the arccosine operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_acos :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -563,7 +992,17 @@ outplace_acos :: proc(
 	return outplace_unary_map(mdarray, inner_acos(T), allocator, location)
 }
 
+/*
+Apply the arccosine operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_acos :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -574,6 +1013,19 @@ inplace_acos :: proc(
 }
 
 
+/*
+Apply the arctan operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_atan :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -585,7 +1037,17 @@ outplace_atan :: proc(
 	return outplace_unary_map(mdarray, inner_atan(T), allocator, location)
 }
 
+/*
+Apply the arctan operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_atan :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -596,6 +1058,19 @@ inplace_atan :: proc(
 }
 
 
+/*
+Convert all elements in the array from radian to degress out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_degrees :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -607,7 +1082,17 @@ outplace_degrees :: proc(
 	return outplace_unary_map(mdarray, inner_degrees(T), allocator, location)
 }
 
+/*
+Convert all elements in the array from radian to degress in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_degrees :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -618,6 +1103,19 @@ inplace_degrees :: proc(
 }
 
 
+/*
+Convert all elements in the array from degrees to radian out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_radians :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -629,7 +1127,17 @@ outplace_radians :: proc(
 	return outplace_unary_map(mdarray, inner_radians(T), allocator, location)
 }
 
+/*
+Convert all elements in the array from degrees to radian in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_radians :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -642,6 +1150,19 @@ inplace_radians :: proc(
 
 // ------
 
+/*
+Apply the hyperpolic sine operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_sinh :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -653,7 +1174,17 @@ outplace_sinh :: proc(
 	return outplace_unary_map(mdarray, inner_sinh(T), allocator, location)
 }
 
+/*
+Apply the hyperpolic sine operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_sinh :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -664,6 +1195,19 @@ inplace_sinh :: proc(
 }
 
 
+/*
+Apply the hyperpolic cosine operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_cosh :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -675,7 +1219,17 @@ outplace_cosh :: proc(
 	return outplace_unary_map(mdarray, inner_cosh(T), allocator, location)
 }
 
+/*
+Apply the hyperpolic cosine operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_cosh :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -686,6 +1240,19 @@ inplace_cosh :: proc(
 }
 
 
+/*
+Apply the hyperpolic tan operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_tanh :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -697,7 +1264,17 @@ outplace_tanh :: proc(
 	return outplace_unary_map(mdarray, inner_tanh(T), allocator, location)
 }
 
+/*
+Apply the hyperpolic tan operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_tanh :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -708,6 +1285,19 @@ inplace_tanh :: proc(
 }
 
 
+/*
+Apply the hyperpolic arcsine operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_asinh :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -719,7 +1309,17 @@ outplace_asinh :: proc(
 	return outplace_unary_map(mdarray, inner_asinh(T), allocator, location)
 }
 
+/*
+Apply the hyperpolic arcsine operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_asinh :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -730,6 +1330,19 @@ inplace_asinh :: proc(
 }
 
 
+/*
+Apply the hyperpolic arccosine operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_acosh :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -741,7 +1354,17 @@ outplace_acosh :: proc(
 	return outplace_unary_map(mdarray, inner_acosh(T), allocator, location)
 }
 
+/*
+Apply the hyperpolic arccosine operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_acosh :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -752,6 +1375,19 @@ inplace_acosh :: proc(
 }
 
 
+/*
+Apply the hyperpolic arctan operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_atanh :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -763,7 +1399,17 @@ outplace_atanh :: proc(
 	return outplace_unary_map(mdarray, inner_atanh(T), allocator, location)
 }
 
+/*
+Apply the hyperpolic arctan operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_atanh :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -776,6 +1422,19 @@ inplace_atanh :: proc(
 
 // ------
 
+/*
+Apply the conjugate operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_conj :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -787,7 +1446,17 @@ outplace_conj :: proc(
 	return outplace_unary_map(mdarray, inner_conj(T), allocator, location)
 }
 
+/*
+Apply the conjugate operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_conj :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,
@@ -798,6 +1467,19 @@ inplace_conj :: proc(
 }
 
 
+/*
+Apply the sine cardinal operator to all elements in the array out of place.
+
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 outplace_sinc :: proc(
 	mdarray : MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -809,7 +1491,17 @@ outplace_sinc :: proc(
 	return outplace_unary_map(mdarray, inner_sinc(T), allocator, location)
 }
 
+/*
+Apply the sine cardinal operator to all elements in the array in place.
 
+Inputs:
+- mdarray: a multidimensional array.
+- f: a unary procedure.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- ok: an optional boolean for error handling.
+*/
 inplace_sinc :: proc(
 	mdarray : MdArray($T, $Nd),
 	location := #caller_location,

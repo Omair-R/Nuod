@@ -7,6 +7,7 @@ import "core:math"
 import "../logging"
 
 
+@private //Making this private to decide on whether to keep this or not.
 inplace_matrix_transpose ::proc(
 	mdarray: ^MdArray($T, 2),
 	allocator:=context.allocator,
@@ -95,6 +96,20 @@ inplace_matrix_transpose ::proc(
 }
 
 
+/*
+Create a permuted view of the provided array.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- value: the value based on which the array will be filled 
+- indices: the permutation indices.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant view.
+- ok: an optional boolean for error handling.
+*/
 permute_dims_view :: proc(
 	mdarray: MdArray($T, $Nd),
 	indices:[Nd]int,
@@ -136,7 +151,20 @@ permute_dims_view :: proc(
 	return result, true
 }
 
+/*
+Create a permuted copy of the provided array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- value: the value based on which the array will be filled 
+- indices: the permutation indices.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant copy.
+- ok: an optional boolean for error handling.
+*/
 permute_dims_copy :: proc(
 	mdarray: MdArray($T, $Nd),
 	indices:[Nd]int,
@@ -151,7 +179,21 @@ permute_dims_copy :: proc(
 	return result, true
 }
 
+/*
+Create a permuted view of the provided array. This will use the default permutation of 
+reversing the order of the dimensions.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- value: the value based on which the array will be filled 
+- indices: the permutation indices.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant view.
+- ok: an optional boolean for error handling.
+*/
 permute_default_view :: proc(
 	mdarray: MdArray($T, $Nd),
 	location := #caller_location,
@@ -170,7 +212,21 @@ permute_default_view :: proc(
 	return permute_dims_view(mdarray, axes, location)	
 }
 
+/*
+Create a permuted copy of the provided array. This will use the default permutation of 
+reversing the order of the dimensions.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- value: the value based on which the array will be filled 
+- indices: the permutation indices.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant copy.
+- ok: an optional boolean for error handling.
+*/
 permute_default_copy :: proc(
 	mdarray: MdArray($T, $Nd),
 	allocator := context.allocator,
@@ -185,7 +241,20 @@ permute_default_copy :: proc(
 }
 
 
+/*
+Create a permuted view of the provided array by swapping two axes.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- value: the value based on which the array will be filled 
+- indices: the permutation indices.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant view.
+- ok: an optional boolean for error handling.
+*/
 swap_axes_view :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis1:int,
@@ -208,7 +277,20 @@ swap_axes_view :: proc(
 	return result, true
 }
 
+/*
+Create a permuted copy of the provided array by swapping two axes.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- value: the value based on which the array will be filled 
+- indices: the permutation indices.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant copy.
+- ok: an optional boolean for error handling.
+*/
 swap_axes_copy :: proc(
 	mdarray: MdArray($T, $Nd),
 	axis1:int,
