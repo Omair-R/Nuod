@@ -421,8 +421,11 @@ ones_like :: proc(
 	mdarray: MdArray(T, Nd),
 	ok: bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
-	mdarray, ok = fills(cast(T)1, source.shape, allocator, location = location)
-	return 
+	when intrinsics.type_is_complex(T){
+		return fills(complex(1, 0), source.shape, allocator, location = location)
+	} else {
+		return fills(cast(T)1, source.shape, allocator, location = location)
+	}
 }
 
 
@@ -441,6 +444,22 @@ inner_range :: proc(
 }
 
 
+/*
+Create a vector(an array with one dimension), based on range specified by the begin,
+step and end values provided.  
+
+Inputs:
+- T: the type of created array. 
+- end: the last value in the range (non-exclusive).
+- begin: the first value in the range.
+- step: the size of the step taken between values within the range.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: The resultant range vector.
+- ok: an optional boolean for error handling.
+*/
 from_range :: proc(
 	$T: typeid,
 	end: int,
@@ -455,14 +474,50 @@ from_range :: proc(
 
 	md_size := (end - begin)/step
 	md_size += ((end - begin)%step) == 0? 0 : 1
+
+	if md_size <= 0 {
+		logging.error(
+			.ArguementError,
+			"Invalid range arguments.",
+			location,
+		)
+	}
 	
 	mdarray = make_mdarray(T, [1]int{md_size}, allocator, location) or_return
 
-	inner_range(mdarray.buffer, T(begin), T(step), size(mdarray))
+	begin_ : T
+	step_ : T
+
+	when intrinsics.type_is_complex(T) {
+		begin_ = complex(begin, 0)
+		step_ = complex(step, 0)
+	} else {
+		begin_ = T(begin)
+		step_ = T(step)
+	}
+	inner_range(mdarray.buffer, begin_, step_, size(mdarray))
 	return mdarray, true
 }
 
 
+/*
+Create a multidimensional array reshaped from a range of values specified by the begin
+and step values provided.  
+
+NOTE: the end value is unnecessary in this function, since it is inferred from the shape.
+
+Inputs:
+- T: the type of created array.
+- shape: the shape of the resultant array.
+- begin: the first value in the range.
+- step: the size of the step taken between values within the range.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: The resultant multidimensional array.
+- ok: an optional boolean for error handling.
+*/
 reshaped_range :: proc(
 	$T: typeid,
 	shape: [$Nd]int,
@@ -491,6 +546,23 @@ get_step :: #force_inline proc "contextless"(begin, end:$T, n: int, endpoint:boo
 }
 
 
+/*
+Create a vector(an array with one dimension) that hosts a linear space of size n.  
+
+NOTE: this procedure is restricted to only float and complex values.
+
+Inputs:
+- T: the type of created array.
+- begin: the first value in the space.
+- end: the last value in the space.
+- n: the size fo the linear space.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: The resultant vector array.
+- ok: an optional boolean for error handling.
+*/
 linspace :: proc(
 	$T: typeid,
 	begin: T,
@@ -507,11 +579,38 @@ linspace :: proc(
 	
 	mdarray = make_mdarray(T, [1]int{n}, allocator, location) or_return
 
-	inner_range(mdarray.buffer, T(begin), T(step), size(mdarray))
+	begin_ : T
+	step_ : T
+	when intrinsics.type_is_complex(T) {
+		begin_ = complex(begin, 0)
+		step_ = complex(step, 0)
+	} else {
+		begin_ = T(begin)
+		step_ = T(step)
+	}
+	inner_range(mdarray.buffer, begin_, step_, size(mdarray))
 	return mdarray, true
 }
 
 
+/*
+Create a vector(an array with one dimension) that hosts a logrithmic space of size n.  
+
+NOTE: this procedure is restricted to only float values.
+
+Inputs:
+- T: the type of created array.
+- begin: the first value in the space.
+- end: the last value in the space.
+- n: the size fo the linear space.
+- base: base of logirthmic space (defaults to 10)
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: The resultant vector array.
+- ok: an optional boolean for error handling.
+*/
 logspace :: proc(
 	$T: typeid,
 	begin: T,
@@ -539,6 +638,23 @@ logspace :: proc(
 }
 
 
+/*
+Create a matrix(an array with two dimensions) with ones at its diagonal and zeros
+otherwise. the position of the diagonal can be shifted based on the value of
+diag_idx (supports negative values).   
+
+Inputs:
+- T: the type of created array.
+- n_rows: number of rows.
+- n_cols: number of columns.
+- diag_idx: position of the diagonal line.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: The resultant eye matrix.
+- ok: an optional boolean for error handling.
+*/
 eye :: proc(
 	$T: typeid,
 	n_rows: u64,
@@ -577,6 +693,19 @@ eye :: proc(
 }
 
 
+/*
+Create a square identity matrix(an array with two dimensions).
+
+Inputs:
+- T: the type of created array.
+- n: the number of rows or columns in the matrix.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: The resultant identity matrix.
+- ok: an optional boolean for error handling.
+*/
 identity :: proc(
 	$T: typeid,
 	n: u64,
@@ -590,6 +719,18 @@ identity :: proc(
 }
 
 
+/*
+Make a copy of an array.
+
+Inputs:
+- source: the source multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: The resultant copy.
+- ok: an optional boolean for error handling.
+*/
 copy_array :: proc(
 	source: MdArray($T, $Nd),
 	allocator := context.allocator,	
@@ -619,6 +760,19 @@ copy_array :: proc(
 }
 
 
+/*
+Casts the internal type of the array to a different type.
+
+Inputs:
+- source: the source multidimensional array.
+- to_type: the destination type.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: The resultant casted copy.
+- ok: an optional boolean for error handling.
+*/
 cast_array :: proc(
 	source: MdArray($T, $Nd),
 	$to_type: typeid,
@@ -652,6 +806,18 @@ cast_array :: proc(
 }
 
 
+/*
+Create a view of an array with a differnt shape. 
+
+Inputs:
+- mdarray: the source multidimensional array.
+- shape: the shape of the destination array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: The resultant reshaped view.
+- ok: an optional boolean for error handling.
+*/
 reshape_view :: proc(
 	mdarray: MdArray($T, $Nd),
 	shape: [$Md]int,
@@ -731,6 +897,19 @@ reshape_view :: proc(
 }
 
 
+/*
+Create a copy of an array with a differnt shape. 
+
+Inputs:
+- mdarray: the source multidimensional array.
+- shape: the shape of the destination array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: The resultant reshaped copy.
+- ok: an optional boolean for error handling.
+*/
 reshape_copy :: proc(
 	mdarray: MdArray($T, $Nd),
 	shape: [$Md]int,
@@ -758,6 +937,20 @@ reshape_copy :: proc(
 }
 
 
+/*
+Create a view of an array with an additional dimension. The dimension is specified based
+on the axis value. 
+
+Inputs:
+- Nd: the number of dimensions before the expansion. 
+- mdarray: the source multidimensional array.
+- axis: the position in the shape, where the additional dimension is placed.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: The resultant reshaped view.
+- ok: an optional boolean for error handling.
+*/
 expand_dim_view :: proc(
 	$Nd: int,
 	mdarray: MdArray($T, Nd),
@@ -800,6 +993,21 @@ expand_dim_view :: proc(
 }
 
 
+/*
+Create a view of an array with an additional dimension. The dimension is specified based
+on the axis value. 
+
+Inputs:
+- Nd: the number of dimensions before the expansion. 
+- mdarray: the source multidimensional array.
+- axis: the position in the shape, where the additional dimension is placed.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant reshaped copy.
+- ok: an optional boolean for error handling.
+*/
 expand_dim_copy :: proc(
 	$Nd: int,
 	mdarray: MdArray($T, Nd),
@@ -821,6 +1029,18 @@ expand_dim_copy :: proc(
 }
 
 
+/*
+Create a flattened (collapse dimensions into one) view of an array. 
+
+Inputs:
+- Nd: the number of dimensions before the expansion. 
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant reshaped view.
+- ok: an optional boolean for error handling.
+*/
 flatten_view :: proc(
 	mdarray: MdArray($T, $Nd),
 	location := #caller_location,
@@ -852,6 +1072,18 @@ flatten_view :: proc(
 }
 
 
+/*
+Create a flattened (collapse dimensions into one) copy of an array. 
+
+Inputs:
+- Nd: the number of dimensions before the expansion. 
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant reshaped copy.
+- ok: an optional boolean for error handling.
+*/
 flatten_copy :: proc(
 	mdarray: MdArray($T, $Nd),
 	allocator := context.allocator,
@@ -875,6 +1107,24 @@ flatten_copy :: proc(
 }
 
 
+/*
+Broadcasts an array by repeating elements across dimensions of size 1 based on a provided
+shape value. For instance, this procedure can broadcast an array of shape (2, 1, 4) to
+(2, 4, 4), by repeating all elements 4 times across the second dimension.
+
+NOTE: It is possible to broadcast to a shape with higher dimensions, given that the lower
+dimensions in the provided shape are still compatible (e.g. (2, 4) -> (2, 2, 4)).
+
+Inputs:
+- mdarray: the source multidimensional array.
+- shape: the broadcasted shape.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant broadcasted array.
+- ok: an optional boolean for error handling.
+*/
 broadcast_to :: proc(
 	mdarray: MdArray($T, $Nd),
 	shape: [$Md]int,
@@ -938,6 +1188,23 @@ broadcast_to :: proc(
 }
 
 
+/*
+Perform custom binary operations on two arrays with broadcastable shapes
+(e.g. a.shape=(2, 1, 4) and b.shape=(2, 3, 1) => result.shape= (2, 3, 4)). This avoids
+any intermidate allocations that result from broadcasting arrays a and b before applying
+the binary operator.
+
+Inputs:
+- a: a multidimensional array broadcastable to the shape of a.
+- b: a multidimensional array broadcastable to the shape of b.
+- f: a binary operator with arguments.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 broadcast_map :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -976,6 +1243,19 @@ broadcast_map :: proc(
 }
 
 
+/*
+reconsile find the broadcasted shape of two copatible arrays.
+(e.g. a.shape=(2, 1, 4) and b.shape=(2, 3, 1) => result= (2, 3, 4)). 
+
+Inputs:
+- a: a multidimensional array broadcastable to the shape of a.
+- b: a multidimensional array broadcastable to the shape of b.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant shape.
+- ok: an optional boolean for error handling.
+*/
 broadcast_shape :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray($S, Nd),
@@ -1012,6 +1292,20 @@ broadcast_shape :: proc(
 }
 
 
+/*
+Stack several arrays of similar dimensions along a certain axis/dimension.
+
+Inputs:
+- Nd: the number of dimensions of the original arrays.
+- mdarrays: a slice that contains the arrays to stack.
+- axis: the axis along with the arrays are stacked.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant stack array.
+- ok: an optional boolean for error handling.
+*/
 stack :: proc(
 	$Nd: int,
 	mdarrays: []MdArray($T, Nd),
@@ -1069,6 +1363,18 @@ stack :: proc(
 }
 
 
+/*
+Stack several vector arrays vertically.
+
+Inputs:
+- mdarrays: a slice that contains the arrays to stack.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant stack array.
+- ok: an optional boolean for error handling.
+*/
 vstack :: proc(
 	mdarrays: []MdArray($T, 1),
 	allocator := context.allocator,
@@ -1115,6 +1421,18 @@ vstack :: proc(
 }
 
 
+/*
+Stack several vector arrays horizontally.
+
+Inputs:
+- mdarrays: a slice that contains the arrays to stack.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant stack array.
+- ok: an optional boolean for error handling.
+*/
 hstack :: proc(
 	mdarrays: []MdArray($T, 1),
 	allocator := context.allocator,
@@ -1156,6 +1474,20 @@ hstack :: proc(
 }
 
 
+/*
+Concatenate several arrays together along a certain axis. All dimensions must be identical
+except for the dimension along which concatenation occurs.
+
+Inputs:
+- mdarrays: a slice that contains the arrays to concatenate.
+- axis: the axis to concatenate along.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant concatenated array.
+- ok: an optional boolean for error handling.
+*/
 concat :: proc(
 	mdarrays: []MdArray($T, $Nd),
 	axis := 0,
@@ -1219,6 +1551,21 @@ concat :: proc(
 }
 
 
+/*
+Returns a vector of all elements that corresponed to the true values in the provided boolean
+array. 
+
+Inputs:
+- mdarray: a multidimensional array.
+- where_array: a multidimensional boolean array according to which the elements of mdarray
+are selected.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant vector.
+- ok: an optional boolean for error handling.
+*/
 where_cond :: proc(
 	mdarray: MdArray($T, $Nd),
 	where_array: MdArray(bool, Nd),
