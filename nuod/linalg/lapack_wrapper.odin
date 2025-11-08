@@ -163,6 +163,7 @@ lapack_qr_wrapper :: proc(
 	return true
 }
 
+
 @private
 lapack_svd_wrapper :: proc(
 	a: []$T,
@@ -175,15 +176,6 @@ lapack_svd_wrapper :: proc(
 )->(
 	ok: bool
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
-
-	if T != f32 && T != f64 && T != complex64 && T != complex128 {
-		logging.error(
-			.ArguementError,
-			"OpenBlas functions only support f32 and f64 types.",
-			location = location,
-		)
-		return
-	}
 
 	k := int(min(m, n))
 
@@ -200,16 +192,26 @@ lapack_svd_wrapper :: proc(
 			v_size = 0
 	}
 
-	if len(s) != k || len(u) != u_size || len(vt) != v_size {
-		logging.error(
-			.ArguementError,
-			"Incorrect output array size for s, u or vt.",
-			location = location,
-		)
-		return
-	}
 	
 	when ODIN_DEBUG {
+		if T != f32 && T != f64 && T != complex64 && T != complex128 {
+			logging.error(
+				.ArguementError,
+				"OpenBlas functions only support f32 and f64 types.",
+				location = location,
+			)
+			return
+		}
+
+		if len(s) != k || len(u) != u_size || len(vt) != v_size {
+			logging.error(
+				.ArguementError,
+				"Incorrect output array size for s, u or vt.",
+				location = location,
+			)
+			return
+		}
+
 		if m <= 0 || n <= 0 {
 			logging.error(
 				.ArguementError,
@@ -279,6 +281,86 @@ lapack_svd_wrapper :: proc(
 		logging.error(
 			.ArithmeticError,
 			"the SVD subroutines failed to converge.",
+			location = location,
+		)
+		return
+	}
+
+	return true
+}
+
+
+lapack_eig_wrapper_f :: proc(
+	a: []$T,
+	n: lapacke.blasint,
+	wr: []T,
+	wi: []T,
+	vr : []T,
+	compute_vecs: bool,
+	location:= #caller_location,
+)->(
+	ok: bool
+) where intrinsics.type_is_float(T){
+
+	when ODIN_DEBUG {
+		if T != f32 && T != f64 {
+			logging.error(
+				.ArguementError,
+				"OpenBlas functions only support f32 and f64 types.",
+				location = location,
+			)
+			return
+		}
+		if m <= 0 || n <= 0 {
+			logging.error(
+				.ArguementError,
+				"m, n cannot be set to <= 0.",
+				location = location,
+			)
+			return 
+		}
+		if len(e_vals) != n || len(e_vecs) != n*n {
+			logging.error(
+				.ArguementError,
+				"Incorrect output array size for s, u or vt.",
+				location = location,
+			)
+			return
+		}
+	}
+
+	lda := n
+	ldvr := n
+	ldvl := n
+
+	info : lapacke.blasint
+
+	jobvr : c.char = compute_vecs? 'V' : 'N'
+
+	when T == f32{
+		info = lapacke.sgeev(
+			lapacke.LAPACK_ROW_MAJOR,
+			'N', jobvr, n,
+			raw_data(a), lda,
+			raw_data(wr), raw_data(wi),
+			raw_data([]T{}), ldvl,
+			raw_data(vr), ldvr
+		)
+	} else when T == f64{
+		info = lapacke.dgeev(
+			lapacke.LAPACK_ROW_MAJOR,
+			'N', jobvr, n,
+			raw_data(a), lda,
+			raw_data(wr), raw_data(wi),
+			raw_data([]T{}), ldvl,
+			raw_data(vr), ldvr
+		)
+	}
+
+	if info > 0 {
+		logging.error(
+			.ArithmeticError,
+			"the eig subroutines failed to converge.",
 			location = location,
 		)
 		return

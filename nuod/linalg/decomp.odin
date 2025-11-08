@@ -174,7 +174,7 @@ reduced_svd :: proc(
 }
 
 
-svd_skip_uv :: proc(	
+svd_vals :: proc(	
 	$Nd: int,
 	a: md.MdArray($T, Nd),
 	allocator:= context.allocator,
@@ -325,3 +325,178 @@ _inner_svd :: proc(
 }
 
 
+fill_eig_slices :: proc(
+	e_vals: []$C,
+	e_vecs: []C,
+	wr, wi, vr : []$F,
+) where intrinsics.type_is_float(F) || intrinsics.type_is_complex(C) {
+
+	n:= len(e_vals)
+
+	for i in 0..<n{
+		e_vals[i] = complex(wr[i], wi[i])
+	}
+
+	for i in 0..<n{
+		for j:=0; j<n;{
+			if wi[j] == 0.0 {
+				e_vecs[i*n+j] = complex(vr[i*n+j], 0)
+				j += 1
+			} else {
+				e_vecs[i*n+j] = complex(vr[i*n+j], vr[i*n+j+1])
+				e_vecs[i*n+j+1] = conj(e_vecs[i*n+j]) 
+				j += 2
+			}
+		}
+	}
+}
+
+
+eig_f32 :: proc(
+	$Nd: int,
+	a: md.MdArray(f32, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 eig_vals:md.MdArray(complex64, Nd-1),
+	 eig_vecs:md.MdArray(complex64, Nd),
+	 ok:bool,
+) where Nd>=2 {
+	return _inner_eig(Nd, complex64, a, allocator, location)
+}
+
+
+eig_f64 :: proc(
+	$Nd: int,
+	a: md.MdArray(f64, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 eig_vals:md.MdArray(complex128, Nd-1),
+	 eig_vecs:md.MdArray(complex128, Nd),
+	 ok:bool,
+) where Nd>=2 {
+	return _inner_eig(Nd, complex128, a, allocator, location)
+}
+
+
+eig :: proc{ eig_f32, eig_f64 }
+
+
+_inner_eig :: proc(	
+	$Nd: int,
+	$C: typeid,
+	a: md.MdArray($F, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 eig_vals:md.MdArray(C, Nd-1),
+	 eig_vecs:md.MdArray(C, Nd),
+	 ok:bool,
+) where intrinsics.type_is_float(F) || intrinsics.type_is_complex(C), Nd>=2 {
+
+	md.validate_initialized(a, location) or_return
+
+
+	if !lapacke.OPENBLAS_SUPPORTED {
+		logging.error(
+			.NotImplemented,
+			"Decomposion operations are only implemented with openblas support.",
+			location,
+		)
+		return
+	}
+
+	when !(F == f32 || F == f64){
+		logging.error(
+			.ArguementError,
+			"openblas routines do not support half precision routines.",
+			location,
+		)
+		return
+	}
+
+	when (F == f32 && C != complex64) || (F == f64 && C != complex128){
+		logging.error(
+			.ArguementError,
+			"the complex type must correspond to the float.",
+			location,
+		)
+		return
+	}
+	
+	n:= a.shape[Nd-1]
+	if n != a.shape[Nd-2] {
+		logging.error(
+			.ArguementError,
+			"the eig values can only be computed for nonsymteric square matrices or stacks of matrices.",
+			location=location,
+		)
+	}
+	
+	// Lapack will fill the array since it uses it as a work area.
+	a_ := md.copy_array(a, allocator, location) or_return
+	defer md.free_mdarray(a_)
+
+	n_b:= lapacke.blasint(n)
+
+	wr := make([]f64, n)
+	wi := make([]f64, n)
+	vr := make([]f64, n*n)
+
+	defer {
+		delete(wr)
+		delete(wi)
+		delete(vr)
+	}
+
+	e_vals_shape : [Nd-1]int
+	e_vecs_shape : [Nd]int
+
+	e_vals_shape[Nd-2] = n
+
+	e_vecs_shape[Nd-1] = n
+	e_vecs_shape[Nd-2] = n
+
+	when Nd == 2 {
+		eig_vals = md.make_mdarray(C, e_vals_shape, allocator, location) or_return
+		eig_vecs = md.make_mdarray(C, e_vecs_shape, allocator, location) or_return
+		lapack_eig_wrapper_f(
+			a_.buffer, n_b,
+			wr, wi, vr,
+			true, location
+		) or_return
+		fill_eig_slices(eig_vals.buffer, eig_vecs.buffer, wr, wi, vr)
+	} else { 
+		for d in 0..<Nd-2{
+			e_vals_shape[d] = a_.shape[d]
+			e_vecs_shape[d] = a_.shape[d]
+		}
+
+		eig_vals = md.make_mdarray(T, e_vals_shape, allocator, location) or_return
+		eig_vecs = md.make_mdarray(T, e_vecs_shape, allocator, location) or_return
+
+		a_sig:= n*n
+		e_vals_sig:= n
+		e_vecs_sig:= n*n
+
+		a_s: []T
+		e_vals_s: []T
+		e_vecs_s: []T
+
+		for i in 0..<(md.size(a)/(a_sig)){
+			a_s = a_.buffer[i*a_sig: i*a_sig+a_sig]
+			e_vals_s = eig_vals.buffer[i*e_vals_sig: i*e_vals_sig+e_vals_sig]
+			e_vecs_s = eig_vecs.buffer[i*e_vecs_sig: i*e_vecs_sig+e_vecs_sig]
+
+			lapack_eig_wrapper_f(
+				a_s, n_b,
+				wr, wi, vr,
+				true, location
+			) or_return
+			fill_eig_slices(e_vals_s, e_vecs_s, wr, wi, vr)
+		}
+	}
+
+	return 
+}

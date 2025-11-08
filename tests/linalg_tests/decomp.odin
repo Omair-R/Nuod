@@ -103,7 +103,7 @@ test_lapack_svd :: proc (t : ^testing.T){
 		s, u, vt, ok := nl.full_svd(2, arr)
 	
 
-		s_, ok2 := nl.svd_skip_uv(2, arr)
+		s_, ok2 := nl.svd_vals(2, arr)
 
 		
 		testing.expect(t, md.all_close(s, s_))
@@ -117,54 +117,26 @@ test_lapack_svd :: proc (t : ^testing.T){
 		md.free_mdarray(u)
 		md.free_mdarray(vt)
 	}
+}
 
-	
-	// mode := nl.SVD_Mode.Full
 
-	// m:=4
-	// n:=2
-	// k := int(min(m, n))
+// TODO: Test that decomposition is equal and test higher dimensions
+@test
+test_lapack_eig :: proc (t : ^testing.T){
 
-	// u_size, v_size : int
-	// switch mode {
-	// 	case .Full:
-	// 		u_size = int(m*m)
-	// 		v_size = int(n*n)
-	// 	case .Reduced:
-	// 		u_size = int(m*k)
-	// 		v_size = int(n*k)
-	// 	case .Skip_UV:
-	// 		u_size = 0
-	// 		v_size = 0
-	// }
+	{
+		n:= 2
 
-	// a := make([]f64, m*n)
-	// s := make([]f64, k)
+		arr := md.reshaped_range(f64, [2]int{n, n}, 1)
 
-	// for i in 1..<m*n+1{
-	// 	a[i-1] = f64(i)
-	// }
-	// defer delete(a)
-	// defer delete(s)	
+		e_vals, e_vecs, ok := nl.eig(2, arr)
 
-	// u : []f64
-	// vt : []f64
-	// if mode != .Skip_UV{
-	// 	u = make([]f64, u_size)
-	// 	vt = make([]f64, v_size)
-	// }
-	// defer if mode != .Skip_UV{
-	// 	delete(u)
-	// 	delete(vt)
-	// }
-
-	// nl.lapack_svd_wrapper(
-	// 	a, i64(m), i64(n),
-	// 	s, u, vt, mode,  
-	// )
-
-	// log.info(s)
-	// log.info(u)
-	// log.info(vt)
+		testing.expect_value(t, e_vals.shape, [1]int{n})
+		testing.expect_value(t, e_vecs.shape, [2]int{n, n})
+		
+		md.free_mdarray(arr)
+		md.free_mdarray(e_vals)
+		md.free_mdarray(e_vecs)
+	}
 	
 }
