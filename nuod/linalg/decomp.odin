@@ -6,23 +6,19 @@ import "../logging"
 import lapacke "../lapacke"
 
 
-qr :: proc(	
+validate_open_blas :: proc(
 	a: md.MdArray($T, $Nd),
 	allocator:= context.allocator,
 	location := #caller_location,
-) -> (
-	 q:md.MdArray(T, Nd),
-	 r:md.MdArray(T, Nd),
-	 ok:bool,
-) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
-
+) -> (ok: bool) {
+	
 	md.validate_initialized(a, location) or_return
 
 
 	if !lapacke.OPENBLAS_SUPPORTED {
 		logging.error(
 			.NotImplemented,
-			"QR decomposion is only implemented with openblas support.",
+			"Decomposion operations are only implemented with openblas support.",
 			location,
 		)
 		return
@@ -36,6 +32,22 @@ qr :: proc(
 		)
 		return
 	}
+
+	return true
+}
+
+
+qr :: proc(	
+	a: md.MdArray($T, $Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 q:md.MdArray(T, Nd),
+	 r:md.MdArray(T, Nd),
+	 ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
+
+	validate_open_blas(a, allocator, location) or_return
 
 	a_ := md.copy_array(a, allocator, location) or_return
 	defer md.free_mdarray(a_)
@@ -116,4 +128,200 @@ lapacke_qr :: proc(
 
 	return q, r, true
 }
+
+
+full_svd :: proc(	
+	$Nd: int,
+	a: md.MdArray($T, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 s:md.MdArray(T, Nd-1),
+	 u:md.MdArray(T, Nd),
+	 vt:md.MdArray(T, Nd),
+	 ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
+
+	validate_open_blas(a, allocator, location) or_return
+
+	// Lapack will fill the array since it uses it as a work area.
+	a_ := md.copy_array(a, allocator, location) or_return
+	defer md.free_mdarray(a_)
+
+	return _inner_svd(Nd, a_, .Full, allocator, location) 	
+}
+
+
+reduced_svd :: proc(	
+	$Nd: int,
+	a: md.MdArray($T, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 s:md.MdArray(T, Nd-1),
+	 u:md.MdArray(T, Nd),
+	 vt:md.MdArray(T, Nd),
+	 ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
+
+	validate_open_blas(a, allocator, location) or_return
+
+	// Lapack will fill the array since it uses it as a work area.
+	a_ := md.copy_array(a, allocator, location) or_return
+	defer md.free_mdarray(a_)
+
+	return _inner_svd(Nd, a_, .Reduced, allocator, location) 	
+}
+
+
+svd_skip_uv :: proc(	
+	$Nd: int,
+	a: md.MdArray($T, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 s:md.MdArray(T, Nd-1),
+	 ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 #optional_ok {
+
+	validate_open_blas(a, allocator, location) or_return
+
+	// Lapack will fill the array since it uses it as a work area.
+	a_ := md.copy_array(a, allocator, location) or_return
+	defer md.free_mdarray(a_)
+
+	m:= a.shape[Nd-2]
+	n:= a.shape[Nd-1]
+	k:= min(m, n)
+
+	m_b:= lapacke.blasint(m)
+	n_b:= lapacke.blasint(n)
+
+	s_shape : [Nd-1]int 
+	s_shape[Nd-2] = k
+
+	when Nd == 2 {
+		s = md.make_mdarray(T, s_shape, allocator, location) or_return
+		lapack_svd_wrapper(
+			a.buffer, m_b, n_b,
+			s.buffer, []T{},
+			[]T{}, .Skip_UV
+		) or_return
+	} else { 
+		for d in 0..<Nd-2{
+			s_shape[d] = a.shape[d]
+		}
+
+		s = md.make_mdarray(T, s_shape, allocator, location) or_return
+
+		a_sig:= m*n
+		s_sig:= k
+
+		a_s: []T
+		s_s: []T
+
+		for i in 0..<(md.size(a)/(a_sig)){
+			a_s = a.buffer[i*a_sig: i*a_sig+a_sig]
+			s_s = s.buffer[i*s_sig: i*s_sig+s_sig]
+
+			lapack_svd_wrapper(
+				a_s, m_b, n_b,
+				s_s, []T{},
+				[]T{}, .Skip_UV
+			) or_return
+		}
+	}
+	return s, true 	
+}
+
+
+@private
+_inner_svd :: proc(	
+	$Nd: int,
+	a: md.MdArray($T, Nd),
+	mode: SVD_Mode,
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 s:md.MdArray(T, Nd-1),
+	 u:md.MdArray(T, Nd),
+	 vt:md.MdArray(T, Nd),
+	 ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
+
+	m:= a.shape[Nd-2]
+	n:= a.shape[Nd-1]
+	k:= min(m, n)
+
+	m_b:= lapacke.blasint(m)
+	n_b:= lapacke.blasint(n)
+
+	s_shape : [Nd-1]int 
+	u_shape : [Nd]int
+	v_shape : [Nd]int
+
+	s_shape[Nd-2] = k
+	
+	#partial switch mode {
+		case .Full:
+			u_shape[Nd-2] = m
+			u_shape[Nd-1] = m
+
+			v_shape[Nd-2] = n
+			v_shape[Nd-1] = n
+		case .Reduced:
+			u_shape[Nd-2] = m
+			u_shape[Nd-1] = k
+
+			v_shape[Nd-2] = k
+			v_shape[Nd-1] = n
+	}
+
+	when Nd == 2 {
+		s = md.make_mdarray(T, s_shape, allocator, location) or_return
+		u = md.make_mdarray(T, u_shape, allocator, location) or_return
+		vt = md.make_mdarray(T, v_shape, allocator, location) or_return
+		lapack_svd_wrapper(
+			a.buffer, m_b, n_b,
+			s.buffer, u.buffer,
+			vt.buffer, mode, location
+		) or_return
+	} else { 
+		for d in 0..<Nd-2{
+			s_shape[d] = a.shape[d]
+			u_shape[d] = a.shape[d]
+			vt_shape[d] = a.shape[d]
+		}
+
+		s = md.make_mdarray(T, s_shape, allocator, location) or_return
+		u = md.make_mdarray(T, u_shape, allocator, location) or_return
+		vt = md.make_mdarray(T, vt_shape, allocator, location) or_return
+
+		a_sig:= m*n
+		s_sig:= k
+		u_sig:= m*m
+		v_sig:= n*n
+
+		a_s: []T
+		s_s: []T
+		u_s: []T
+		v_s: []T
+
+		for i in 0..<(md.size(a)/(a_sig)){
+			a_s = a.buffer[i*a_sig: i*a_sig+a_sig]
+			s_s = s.buffer[i*s_sig: i*s_sig+s_sig]
+			u_s = u.buffer[i*u_sig: i*u_sig+u_sig]
+			v_s = vt.buffer[i*v_sig: i*v_sig+v_sig]
+
+			lapack_svd_wrapper(
+				a_s, m_b, n_b,
+				s_s, u_s,
+				v_s, mode
+			) or_return
+		}
+	}
+
+	return s, u, vt, true	
+}
+
 

@@ -7,6 +7,13 @@ import "core:c"
 import "base:intrinsics"
 
 
+SVD_Mode :: enum{
+	Full,
+	Reduced,
+	Skip_UV
+}
+
+@private
 lapack_qr_wrapper :: proc(
 	a: []$T,
 	m, n: lapacke.blasint,
@@ -155,3 +162,129 @@ lapack_qr_wrapper :: proc(
 
 	return true
 }
+
+@private
+lapack_svd_wrapper :: proc(
+	a: []$T,
+	m, n: lapacke.blasint,
+	s : []T,
+	u : []T,
+	vt : []T,
+	mode: SVD_Mode,
+	location:= #caller_location,
+)->(
+	ok: bool
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
+
+	if T != f32 && T != f64 && T != complex64 && T != complex128 {
+		logging.error(
+			.ArguementError,
+			"OpenBlas functions only support f32 and f64 types.",
+			location = location,
+		)
+		return
+	}
+
+	k := int(min(m, n))
+
+	u_size, v_size : int
+	switch mode {
+		case .Full:
+			u_size = int(m*m)
+			v_size = int(n*n)
+		case .Reduced:
+			u_size = int(m)*k
+			v_size = int(n)*k
+		case .Skip_UV:
+			u_size = 0
+			v_size = 0
+	}
+
+	if len(s) != k || len(u) != u_size || len(vt) != v_size {
+		logging.error(
+			.ArguementError,
+			"Incorrect output array size for s, u or vt.",
+			location = location,
+		)
+		return
+	}
+	
+	when ODIN_DEBUG {
+		if m <= 0 || n <= 0 {
+			logging.error(
+				.ArguementError,
+				"m, n cannot be set to <= 0.",
+				location = location,
+			)
+			return 
+		}
+	}
+
+	lda := n
+	//the leading dimension for ldu depends on k, when in reduced mode
+	ldu := m>n && mode == .Reduced? n : m
+	ldv := n
+
+	info : lapacke.blasint
+	
+	s_mode : c.char
+	switch mode {
+		case .Full:
+			s_mode = 'A'
+		case .Reduced:
+			s_mode = 'S'
+		case .Skip_UV:
+			s_mode = 'N'
+	}
+
+	when T == f32{
+		info = lapacke.sgesdd(
+			lapacke.LAPACK_ROW_MAJOR,
+			s_mode, m, n,
+			raw_data(a), lda,
+			raw_data(s),
+			raw_data(u), ldu,
+			raw_data(vt), ldv
+		)
+	} else when T == f64{
+		info = lapacke.dgesdd(
+			lapacke.LAPACK_ROW_MAJOR,
+			s_mode, m, n,
+			raw_data(a), lda,
+			raw_data(s),
+			raw_data(u), ldu,
+			raw_data(vt), ldv
+		)
+	} else when T == complex64{
+		info = lapacke.cgesdd(
+			lapacke.LAPACK_ROW_MAJOR,
+			s_mode, m, n,
+			raw_data(a), lda,
+			raw_data(s),
+			raw_data(u), ldu,
+			raw_data(vt), ldv
+		)
+	} else when T == complex128{
+		info = lapacke.zgesdd(
+			lapacke.LAPACK_ROW_MAJOR,
+			s_mode, m, n,
+			raw_data(a), lda,
+			raw_data(s),
+			raw_data(u), ldu,
+			raw_data(vt), ldv
+		)
+	}
+
+	if info > 0 {
+		logging.error(
+			.ArithmeticError,
+			"the SVD subroutines failed to converge.",
+			location = location,
+		)
+		return
+	}
+
+	return true
+}
+
+

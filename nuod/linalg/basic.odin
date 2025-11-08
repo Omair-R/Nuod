@@ -41,6 +41,27 @@ MatrixNorm :: enum{
 
 
 // Diagonal
+make_diagonal :: proc(	
+	mdarray: md.MdArray($T, 1),
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	result: md.MdArray(T, 2),
+	ok:bool
+) where intrinsics.type_is_numeric(T) || intrinsics.type_is_boolean(T) #optional_ok {
+
+	md.validate_initialized(mdarray, location=location) or_return
+
+	n:= mdarray.shape[0]
+	result = md.make_mdarray(T, [2]int{n, n}, allocator=allocator, location=location)
+
+	for i in 0..<n{
+		result.buffer[i*n+i] = md.get_linear(mdarray, i, location=location)
+	}
+	return result, true
+}
+
+// Diagonal
 matrix_diagonal :: proc(	
 	mdarray: md.MdArray($T, 2),
 	offset:=0,
