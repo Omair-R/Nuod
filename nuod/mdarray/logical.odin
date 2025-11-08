@@ -153,9 +153,12 @@ get_default_tol :: #force_inline proc "contextless"($T: typeid) -> (
 	rtol, atol: f64,
 	ok: bool,
 ){
-	when T == f32 || T == f64 || T == complex64 || T==complex128 {
+	when T == f64 || T==complex128 {
 		rtol = f64(1e-7)
 		atol = f64(1e-8)
+	} else when T == f32 || T == complex64{
+		rtol = f64(1e-4)
+		atol = f64(1e-5)
 	} else when T == f16 || T == complex32 {
 		rtol = f64(1e-3)
 		atol = f64(1e-4)

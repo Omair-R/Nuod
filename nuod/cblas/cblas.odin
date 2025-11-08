@@ -9,16 +9,22 @@ package cblas
 
 import "core:c"
 
-_ :: c
-
 when ODIN_OS == .Windows {
-	foreign import openblas "../../vendors/openblas/lib/libopenblas.lib"
+	foreign import openblas "../../../vendors/openblas/lib/libopenblas.lib"
 } else when ODIN_OS == .Linux {
 	foreign import openblas "system:openblas"
 } else when ODIN_OS == .Darwin {
 	foreign import openblas "system:openblas"
 }
 
+when ODIN_OS == .Windows || ODIN_OS == .Darwin || ODIN_OS == .Linux{
+	OPENBLAS_SUPPORTED :: true
+} else {
+	OPENBLAS_SUPPORTED :: false
+}
+
+bfloat16 :: u16
+blasint :: i64
 
 /*Set the threading backend to a custom callback.*/
 openblas_dojob_callback :: proc "c" (job_id: c.int, job_data: rawptr, thread_id: c.int)
@@ -34,7 +40,6 @@ THREAD :: 1
 /* OpenBLAS is compiled using OpenMP threading model */
 OPENMP :: 2
 
-// CONST ::
 
 CBLAS_INDEX :: c.size_t
 
