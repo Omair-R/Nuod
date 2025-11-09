@@ -1,5 +1,7 @@
 package linalg
 
+import "core:slice"
+import "core:math"
 import "base:intrinsics"
 import md "../mdarray"
 import "../logging"
@@ -643,13 +645,13 @@ _inner_eigvals :: proc(
 
 
 det_matrix :: proc(	
-	a: md.MdArray($T, $Nd),
+	a: md.MdArray($T, 2),
 	allocator:= context.allocator,
 	location := #caller_location,
 ) -> (
 	de: T, 
 	ok:bool,
-) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) #optional_ok {
 
 	validate_open_blas(a, allocator, location) or_return
 
@@ -668,18 +670,64 @@ det_tensor :: proc(
 ) -> (
 	de: md.MdArray(T, Nd-2), 
 	ok:bool,
-) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 #optional_ok {
 
 	validate_open_blas(a, allocator, location) or_return
 
 	a_ := md.copy_array(a, allocator, location) or_return
 	defer md.free_mdarray(a_)
 
-	return lapacke_det(a_, allocator, location) 	
+	return lapacke_det(3, a_, allocator, location) 	
 }
 
 
 det :: proc { det_matrix, det_tensor}
+
+
+slog_det_matrix :: proc(	
+	a: md.MdArray($T, 2),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	sign: int,
+	slog_de: T, 
+	ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
+
+	de := det_matrix(a, allocator, location) or_return
+
+	sign = math.sign(de)
+
+	slog_de = abs(de)
+	slog_de = ln(slog_det)
+
+	return sign, slog_de, true 	
+}
+
+
+slog_det_tensor :: proc(	
+	$Nd: int, 
+	a: md.MdArray($T, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	sign: md.MdArray(int, Nd-2),
+	slog_de: md.MdArray(T, Nd-2), 
+	ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
+
+	slog_de = det(Nd, a, allocator, location) or_return
+
+	sign := md.o_sign(slog_de, allocator, location) or_return
+
+	md.i_abs(slog_de)
+	md.i_ln(slog_de)
+
+	return sign, slog_de, true 	
+}
+
+
+slog_det :: proc { det_matrix, det_tensor}
 
 
 @(private="file")
@@ -702,7 +750,7 @@ lapacke_det_matrix :: proc(
 	ipiv := make([]lapacke.blasint, k)
 	defer delete(ipiv)
 
-	de = -1
+	slice.fill(ipiv, 0)
 	lapack_lu_wrapper(
 		a.buffer,
 		m_b, n_b,
@@ -710,8 +758,11 @@ lapacke_det_matrix :: proc(
 		location
 	) or_return
 
+	de = 1
+
 	for i in 0..<k{
 		de *= a.buffer[i*n+i]
+		if ipiv[i] != lapacke.blasint(i) do de *= -1
 	}
 
 	return de, true
@@ -736,7 +787,7 @@ lapacke_det :: proc(
 	m_b:= lapacke.blasint(m)
 	n_b:= lapacke.blasint(n)
 
-	ipiv = make([]lapacke.blasint, k)
+	ipiv := make([]lapacke.blasint, k)
 	defer delete(ipiv)
 
 	det_shape : [Nd-2]int
@@ -753,7 +804,10 @@ lapacke_det :: proc(
 
 	for i in 0..<(md.size(a)/(a_sig)){
 		a_s = a.buffer[i*a_sig: i*a_sig+a_sig]
-		de[i] = -1
+		de.buffer[i] = 1
+
+		slice.fill(ipiv, 0)
+
 		lapack_lu_wrapper(
 			a_s,
 			m_b, n_b,
@@ -761,8 +815,9 @@ lapacke_det :: proc(
 			location
 		) or_return
 
-		for i in 0..<k{
-			de[i] *= a_s[i*n+i]
+		for j in 0..<k{
+			de.buffer[i] *= a_s[j*n+j]
+			if ipiv[j] != lapacke.blasint(j) do de.buffer[i] *= -1
 		}
 	}
 

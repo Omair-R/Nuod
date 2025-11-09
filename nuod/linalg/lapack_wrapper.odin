@@ -416,7 +416,6 @@ lapack_lu_wrapper :: proc(
 
 	info : lapacke.blasint
 	
-
 	when T == f32{
 		info = lapacke.sgetrf(
 			lapacke.LAPACK_ROW_MAJOR,

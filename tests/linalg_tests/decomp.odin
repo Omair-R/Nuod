@@ -175,20 +175,89 @@ test_lapack_det :: proc (t : ^testing.T){
 		testing.expect_value(t, det, 8)
 		md.free_mdarray(arr)
 	}
-	
+
+	{
+		n:= 3
+
+		arr := md.from_slice([]f64{3, 2, 4, 2, 0, 2, 4, 2, 3}, [2]int{n, n})
+		arr_s := md.stack(2, []md.MdArray(f64, 2){arr, arr})
+		det, ok := nl.det(3, arr_s)
+
+		log.info(det)
+		testing.expect_value(t, det.buffer[0], 8)
+		testing.expect_value(t, det.buffer[1], 8)
+		md.free_mdarray(arr)
+		md.free_mdarray(arr_s)
+		md.free_mdarray(det)
+	}
+
+	{
+		n:= 3
+
+		arr := md.from_slice([]f64{1, 3, 0, 4, 1, 0, 2, 0, 1}, [2]int{n, n})
+
+		det, ok := nl.det(arr)
+
+		testing.expect_value(t, det, -11)
+		md.free_mdarray(arr)
+	}
+
+	{
+		n:= 3
+
+		arr := md.from_slice([]f64{6, 1, 1, 4, -2, 5, 2, 8, 7}, [2]int{n, n})
+
+		det, ok := nl.det(arr)
+
+		testing.expect_value(t, det, -306)
+		md.free_mdarray(arr)
+	}
+
 	{
 		n:= 2
 
-		arr := md.reshaped_range(f64, [2]int{n, n}, 1)
+		arr := md.from_slice([]f64{4, 6, 3, 8}, [2]int{n, n})
+
+		det, ok := nl.det(arr)
+
+		testing.expect_value(t, det, 14)
+		md.free_mdarray(arr)
+	}
+
+	{
+		n:= 2
+
+		arr := md.from_slice([]f64{2, 2, 2, 1}, [2]int{n, n})
 
 		det, ok := nl.det(arr)
 
 		testing.expect_value(t, det, -2)
 		md.free_mdarray(arr)
 	}
+	
+	// {
+	// 	n:= 2
+
+	// 	arr := md.reshaped_range(f64, [2]int{n, n}, 1)
+
+	// 	det, ok := nl.det(arr)
+
+	// 	testing.expect_value(t, det, -2)
+	// 	md.free_mdarray(arr)
+	// }
 
 	{
 		n:= 3
+
+		arr := md.reshaped_range(f64, [2]int{n, n}, 1)
+
+		det, ok := nl.det(arr)
+
+		testing.expect_value(t, det, 0)
+		md.free_mdarray(arr)
+	}
+	{
+		n:= 4
 
 		arr := md.reshaped_range(f64, [2]int{n, n}, 1)
 
