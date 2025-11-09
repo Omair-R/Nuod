@@ -500,3 +500,271 @@ _inner_eig :: proc(
 
 	return 
 }
+
+
+eigvals_f32 :: proc(
+	$Nd: int,
+	a: md.MdArray(f32, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 eig_vals:md.MdArray(complex64, Nd-1),
+	 ok:bool,
+) where Nd>=2 {
+	return _inner_eigvals(Nd, complex64, a, allocator, location)
+}
+
+
+eigvals_f64 :: proc(
+	$Nd: int,
+	a: md.MdArray(f64, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 eig_vals:md.MdArray(complex128, Nd-1),
+	 ok:bool,
+) where Nd>=2 {
+	return _inner_eigvals(Nd, complex128, a, allocator, location)
+}
+
+
+eigvals :: proc{ eigvals_f32, eigvals_f64 }
+
+
+_inner_eigvals :: proc(	
+	$Nd: int,
+	$C: typeid,
+	a: md.MdArray($F, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 eig_vals:md.MdArray(C, Nd-1),
+	 ok:bool,
+) where intrinsics.type_is_float(F) || intrinsics.type_is_complex(C), Nd>=2 {
+
+	md.validate_initialized(a, location) or_return
+
+
+	if !lapacke.OPENBLAS_SUPPORTED {
+		logging.error(
+			.NotImplemented,
+			"Decomposion operations are only implemented with openblas support.",
+			location,
+		)
+		return
+	}
+
+	when !(F == f32 || F == f64){
+		logging.error(
+			.ArguementError,
+			"openblas routines do not support half precision routines.",
+			location,
+		)
+		return
+	}
+
+	when (F == f32 && C != complex64) || (F == f64 && C != complex128){
+		logging.error(
+			.ArguementError,
+			"the complex type must correspond to the float.",
+			location,
+		)
+		return
+	}
+	
+	n:= a.shape[Nd-1]
+	if n != a.shape[Nd-2] {
+		logging.error(
+			.ArguementError,
+			"the eig values can only be computed for nonsymteric square matrices or stacks of matrices.",
+			location=location,
+		)
+	}
+	
+	// Lapack will fill the array since it uses it as a work area.
+	a_ := md.copy_array(a, allocator, location) or_return
+	defer md.free_mdarray(a_)
+
+	n_b:= lapacke.blasint(n)
+
+	wr := make([]f64, n)
+	wi := make([]f64, n)
+
+
+	defer {
+		delete(wr)
+		delete(wi)
+	}
+
+	e_vals_shape : [Nd-1]int
+	e_vals_shape[Nd-2] = n
+
+
+	when Nd == 2 {
+		eig_vals = md.make_mdarray(C, e_vals_shape, allocator, location) or_return
+		lapack_eig_wrapper_f(
+			a_.buffer, n_b,
+			wr, wi, []F{},
+			false, location
+		) or_return
+		for i in 0..<n{
+			eig_vals.buffer[i] = complex(wr[i], wi[i])
+		}
+	} else { 
+		for d in 0..<Nd-2{
+			e_vals_shape[d] = a_.shape[d]
+		}
+
+		eig_vals = md.make_mdarray(T, e_vals_shape, allocator, location) or_return
+
+		a_sig:= n*n
+		e_vals_sig:= n
+
+		a_s: []T
+		e_vals_s: []T
+
+		for i in 0..<(md.size(a)/(a_sig)){
+			a_s = a_.buffer[i*a_sig: i*a_sig+a_sig]
+			e_vals_s = eig_vals.buffer[i*e_vals_sig: i*e_vals_sig+e_vals_sig]
+
+			lapack_eig_wrapper_f(
+				a_s, n_b,
+				wr, wi, []F{},
+				false, location
+			) or_return
+			for i in 0..<n{
+				e_vecs_s[i] = complex(wr[i], wi[i])
+			}
+		}
+	}
+
+	return 
+}
+
+
+det_matrix :: proc(	
+	a: md.MdArray($T, $Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	de: T, 
+	ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
+
+	validate_open_blas(a, allocator, location) or_return
+
+	a_ := md.copy_array(a, allocator, location) or_return
+	defer md.free_mdarray(a_)
+
+	return lapacke_det_matrix(a_, allocator, location) 	
+}
+
+
+det_tensor :: proc(	
+	$Nd: int, 
+	a: md.MdArray($T, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	de: md.MdArray(T, Nd-2), 
+	ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
+
+	validate_open_blas(a, allocator, location) or_return
+
+	a_ := md.copy_array(a, allocator, location) or_return
+	defer md.free_mdarray(a_)
+
+	return lapacke_det(a_, allocator, location) 	
+}
+
+
+det :: proc { det_matrix, det_tensor}
+
+
+@(private="file")
+lapacke_det_matrix :: proc(	
+	a: md.MdArray($T, 2),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	de: T, 
+	ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
+
+	m:= a.shape[0]
+	n:= a.shape[1]
+	k:= min(m, n)
+
+	m_b:= lapacke.blasint(m)
+	n_b:= lapacke.blasint(n)
+
+	ipiv := make([]lapacke.blasint, k)
+	defer delete(ipiv)
+
+	de = -1
+	lapack_lu_wrapper(
+		a.buffer,
+		m_b, n_b,
+		ipiv,
+		location
+	) or_return
+
+	for i in 0..<k{
+		de *= a.buffer[i*n+i]
+	}
+
+	return de, true
+}
+
+
+@(private="file")
+lapacke_det :: proc(	
+	$Nd: int, 
+	a: md.MdArray($T, Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	de: md.MdArray(T, Nd-2), 
+	ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>2 {
+
+	m:= a.shape[Nd-2]
+	n:= a.shape[Nd-1]
+	k:= min(m, n)
+
+	m_b:= lapacke.blasint(m)
+	n_b:= lapacke.blasint(n)
+
+	ipiv = make([]lapacke.blasint, k)
+	defer delete(ipiv)
+
+	det_shape : [Nd-2]int
+
+	for d in 0..<Nd-2{
+		det_shape[d] = a.shape[d]
+	}
+
+	de = md.make_mdarray(T, det_shape, allocator, location) or_return
+
+	a_sig:= m*n
+
+	a_s: []T
+
+	for i in 0..<(md.size(a)/(a_sig)){
+		a_s = a.buffer[i*a_sig: i*a_sig+a_sig]
+		de[i] = -1
+		lapack_lu_wrapper(
+			a_s,
+			m_b, n_b,
+			ipiv,
+			location
+		) or_return
+
+		for i in 0..<k{
+			de[i] *= a_s[i*n+i]
+		}
+	}
+
+	return de, true
+}

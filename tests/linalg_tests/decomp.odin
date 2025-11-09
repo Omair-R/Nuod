@@ -140,3 +140,61 @@ test_lapack_eig :: proc (t : ^testing.T){
 	}
 	
 }
+
+
+// TODO: Test that decomposition is equal and test higher dimensions
+@test
+test_lapack_eigvals :: proc (t : ^testing.T){
+
+	{
+		n:= 2
+
+		arr := md.reshaped_range(f64, [2]int{n, n}, 1)
+
+		e_vals, ok := nl.eigvals(2, arr)
+
+		testing.expect_value(t, e_vals.shape, [1]int{n})
+		
+		md.free_mdarray(arr)
+		md.free_mdarray(e_vals)
+	}
+	
+}
+
+
+@test
+test_lapack_det :: proc (t : ^testing.T){
+
+	{
+		n:= 3
+
+		arr := md.from_slice([]f64{3, 2, 4, 2, 0, 2, 4, 2, 3}, [2]int{n, n})
+
+		det, ok := nl.det(arr)
+
+		testing.expect_value(t, det, 8)
+		md.free_mdarray(arr)
+	}
+	
+	{
+		n:= 2
+
+		arr := md.reshaped_range(f64, [2]int{n, n}, 1)
+
+		det, ok := nl.det(arr)
+
+		testing.expect_value(t, det, -2)
+		md.free_mdarray(arr)
+	}
+
+	{
+		n:= 3
+
+		arr := md.reshaped_range(f64, [2]int{n, n}, 1)
+
+		det, ok := nl.det(arr)
+
+		testing.expect_value(t, det, 0)
+		md.free_mdarray(arr)
+	}
+}

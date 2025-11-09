@@ -370,3 +370,90 @@ lapack_eig_wrapper_f :: proc(
 }
 
 
+@private
+lapack_lu_wrapper :: proc(
+	a: []$T,
+	m, n: lapacke.blasint,
+	ipiv : []lapacke.blasint,
+	location:= #caller_location,
+)->(
+	ok: bool
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
+
+	k := int(min(m, n))
+
+	
+	when ODIN_DEBUG {
+		if T != f32 && T != f64 && T != complex64 && T != complex128 {
+			logging.error(
+				.ArguementError,
+				"OpenBlas functions only support f32 and f64 types.",
+				location = location,
+			)
+			return
+		}
+
+		if len(a) != m*n || len(ipiv) != k {
+			logging.error(
+				.ArguementError,
+				"Incorrect output array size for s, u or vt.",
+				location = location,
+			)
+			return
+		}
+
+		if m <= 0 || n <= 0 {
+			logging.error(
+				.ArguementError,
+				"m, n cannot be set to <= 0.",
+				location = location,
+			)
+			return 
+		}
+	}
+
+	lda := n
+
+	info : lapacke.blasint
+	
+
+	when T == f32{
+		info = lapacke.sgetrf(
+			lapacke.LAPACK_ROW_MAJOR,
+			m, n,
+			raw_data(a), lda,
+			raw_data(ipiv)
+		)
+	} else when T == f64{
+		info = lapacke.dgetrf(
+			lapacke.LAPACK_ROW_MAJOR,
+			m, n,
+			raw_data(a), lda,
+			raw_data(ipiv)
+		)
+	} else when T == complex64{
+		info = lapacke.cgetrf(
+			lapacke.LAPACK_ROW_MAJOR,
+			m, n,
+			raw_data(a), lda,
+			raw_data(ipiv)
+		)
+	} else when T == complex128{
+		info = lapacke.zgetrf(
+			lapacke.LAPACK_ROW_MAJOR,
+			m, n,
+			raw_data(a), lda,
+			raw_data(ipiv)
+		)
+	}
+
+	if info > 0 {
+		logging.warning(
+			.None, // TODO
+			"the diagonal of the U matrix is exactly zero, do no use to solve a system of equation.",
+			location = location,
+		)
+	}
+
+	return true
+}
