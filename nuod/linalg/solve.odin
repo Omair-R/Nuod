@@ -280,3 +280,42 @@ lapacke_inv :: proc(
 
 	return true
 }
+
+
+pinv :: proc(	
+	a: md.MdArray($T, $Nd),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 pinv_a:md.MdArray(T, Nd),
+	 ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 #optional_ok{
+
+
+	s, u, vt := reduced_svd(Nd, a, allocator, location) or_return
+
+	md.i_reciprocal(s)
+
+	s_diag := make_diagonal(s, allocator, location)
+	indices : [Nd]int
+
+	when Nd >2 do for i in 0..<Nd-2{
+		indices[i] = i
+	}
+	indices[Nd-2] = Nd-1
+	indices[Nd-1] = Nd-2
+	
+	ut := md.transpose_view(u, indices, location) or_return 
+	v := md.transpose_view(vt, indices, location) or_return
+
+	intr := matmul(v, s_diag) or_return
+	pinv_a = matmul(intr, ut) or_return
+	
+	md.free_mdarray(s)
+	md.free_mdarray(u)
+	md.free_mdarray(vt)
+	md.free_mdarray(intr)
+	md.free_mdarray(s_diag)
+			
+	return pinv_a, true
+}

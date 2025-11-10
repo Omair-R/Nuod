@@ -315,3 +315,77 @@ test_lapack_inv :: proc (t : ^testing.T){
 	}
 
 }
+
+@test
+test_lapack_pinv :: proc (t : ^testing.T){
+
+	{
+		n:= 3
+
+		arr := md.from_slice([]f64{3, 2, 4, 2, 0, 2, 4, 2, 3}, [2]int{n, n})
+
+		pinv := nl.pinv(arr)
+		inv := nl.inv(arr)
+
+		id := nl.matmul(pinv, arr)
+		id_ := md.identity(f64, 3)
+
+		close := md.all_close(id, id_)
+		testing.expect(t, close )
+
+		close = md.all_close(inv, pinv)
+		testing.expect(t, close )
+
+		md.free_mdarray(arr)
+		md.free_mdarray(inv)
+		md.free_mdarray(pinv)
+		md.free_mdarray(id)
+		md.free_mdarray(id_)
+	}
+
+	{
+
+		arr := md.from_slice([]f64{3, 2,  2, 0, 4, 2}, [2]int{3, 2})
+
+		pinv := nl.pinv(arr)
+
+		id := nl.matmul(pinv, arr)
+		id_ := md.identity(f64, 2)
+
+		close := md.all_close(id, id_)
+		testing.expect(t, close )
+
+		md.free_mdarray(arr)
+		md.free_mdarray(pinv)
+		md.free_mdarray(id)
+		md.free_mdarray(id_)
+	}
+	{
+		s:= 3
+		n:: 2
+
+		arr := md.reshaped_range(f64, [3]int{s, n, n})
+
+		pinv := nl.inv(arr)
+		inv := nl.inv(arr)
+
+		id := nl.matmul(pinv, arr)
+		id_ := md.identity(f64, n)
+
+		for i in 0..<s{
+			n_id := md.slice_view(3, id, i)
+			close := md.all_close(id_, n_id)
+			testing.expect(t, close )
+		}
+
+		close := md.all_close(inv, pinv)
+		testing.expect(t, close )
+
+		md.free_mdarray(arr)
+		md.free_mdarray(inv)
+		md.free_mdarray(pinv)
+		md.free_mdarray(id)
+		md.free_mdarray(id_)
+	}
+
+}
