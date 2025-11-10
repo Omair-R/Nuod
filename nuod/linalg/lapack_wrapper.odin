@@ -514,3 +514,89 @@ lapack_lu_inv_wrapper :: proc(
 
 	return true
 }
+
+
+@private
+lapack_solve_wrapper :: proc(
+	a: []$T,
+	b: []T,
+	n, nrhs: lapacke.blasint,
+	ipiv : []lapacke.blasint,
+	allocator:=context.allocator,
+	location:= #caller_location,
+)->(
+	ok: bool
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
+
+	if T != f32 && T != f64 && T != complex64 && T != complex128 {
+		logging.error(
+			.ArguementError,
+			"OpenBlas functions only support f32 and f64 types.",
+			location = location,
+		)
+		return
+	}
+
+	when ODIN_DEBUG {
+		if nrhs <= 0 || n <= 0 {
+			logging.error(
+				.ArguementError,
+				"m, n cannot be set to <= 0.",
+				location = location,
+			)
+			return 
+		}
+	}
+
+	lda := n
+	ldb := nrhs
+	
+	info : lapacke.blasint
+
+	when T == f32{
+		info = lapacke.sgesv(
+			lapacke.LAPACK_ROW_MAJOR,
+			n, nrhs,
+			raw_data(a), lda,
+			raw_data(ipiv),
+			raw_data(b), ldb
+		)
+	} else when T == f64{
+		info = lapacke.dgesv(
+			lapacke.LAPACK_ROW_MAJOR,
+			n, nrhs,
+			raw_data(a), lda,
+			raw_data(ipiv),
+			raw_data(b), ldb
+		)
+	} else when T == complex64{
+		info = lapacke.cgesv(
+			lapacke.LAPACK_ROW_MAJOR,
+			n, nrhs,
+			raw_data(a), lda,
+			raw_data(ipiv),
+			raw_data(b), ldb
+		)
+	} else when T == complex128{
+		info = lapacke.zgesv(
+			lapacke.LAPACK_ROW_MAJOR,
+			n, nrhs,
+			raw_data(a), lda,
+			raw_data(ipiv),
+			raw_data(b), ldb
+		)
+	}
+
+	if info != 0 {
+		logging.error(
+			.ArithmeticError,
+			"Matrix A is singular, resulting in a division by 0.",
+			location = location,
+		)
+		return
+	}
+
+	return true
+}
+
+

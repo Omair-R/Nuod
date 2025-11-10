@@ -389,3 +389,48 @@ test_lapack_pinv :: proc (t : ^testing.T){
 	}
 
 }
+
+
+
+@test
+test_lapack_solve :: proc (t : ^testing.T){
+
+	{
+		n:= 3
+
+		a := md.from_slice([]f64{3, 2, 4, 2, 0, 2, 4, 2, 3}, [2]int{n, n})
+		b := md.from_slice([]f64{1, 3, 2}, [1]int{n})
+		
+
+		sol := nl.solve(a, b)
+		sol_ := md.from_slice([]f64{1.25, -1.875, 0.25}, [1]int{n})
+
+		close := md.all_close(sol, sol_)
+		testing.expect(t, close)
+	
+		md.free_mdarray(a)
+		md.free_mdarray(b)
+		md.free_mdarray(sol)
+		md.free_mdarray(sol_)
+	}
+
+	{
+		s:=2
+		n:= 3
+
+		a := md.from_slice([]f32{3, 2, 4, 2, 0, 2, 4, 2, 3}, [2]int{n, n})
+		b := md.from_slice([]f32{1, 2, 3, 1, 2, 2}, [2]int{n, s})
+		
+
+		sol := nl.solve(a, b)
+		sol_ := md.from_slice([]f32{1.25, 0.25, -1.875, 0.125, 0.25, 0.25}, [2]int{n, s})
+
+		close := md.all_close(sol, sol_)
+		testing.expect(t, close)
+	
+		md.free_mdarray(a)
+		md.free_mdarray(b)
+		md.free_mdarray(sol)
+		md.free_mdarray(sol_)
+	}
+}

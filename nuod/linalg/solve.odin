@@ -291,14 +291,13 @@ pinv :: proc(
 	 ok:bool,
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 #optional_ok{
 
-
 	s, u, vt := reduced_svd(Nd, a, allocator, location) or_return
 
 	md.i_reciprocal(s)
 
 	s_diag := make_diagonal(s, allocator, location)
-	indices : [Nd]int
 
+	indices : [Nd]int
 	when Nd >2 do for i in 0..<Nd-2{
 		indices[i] = i
 	}
@@ -319,3 +318,85 @@ pinv :: proc(
 			
 	return pinv_a, true
 }
+
+
+solve :: proc(
+	a: md.MdArray($T, $Nd),
+	b: md.MdArray(T, $Md),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 solution:md.MdArray(T, Md),
+	 ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T),
+		Nd>=2 && (Nd==Md || Md==Nd-1) #optional_ok{			
+
+	a_ := md.copy_array(a, allocator, location) or_return		
+	defer md.free_mdarray(a_)
+
+	solution = md.copy_array(b, allocator, location) or_return		
+
+	ok = lapacke_solve(a_, solution, allocator, location) 
+	if !ok {
+		md.free_mdarray(solution)
+		return
+	}
+
+	return solution, true
+}
+
+
+
+@(private="file")
+lapacke_solve :: proc(	
+	a: md.MdArray($T, $Nd),
+	b: md.MdArray(T, $Md),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
+
+	n:= a.shape[Nd-1]
+	when Nd == Md {
+		nrhs:= b.shape[Md-1]
+	} else {
+		nrhs := 1
+	}
+
+	n_b:= lapacke.blasint(n)
+	nrhs_b:= lapacke.blasint(nrhs)
+
+	ipiv := make([]lapacke.blasint, n)
+	defer delete(ipiv)
+
+	when Nd == 2 {
+		lapack_solve_wrapper(
+			a.buffer, b.buffer,
+			n_b, nrhs_b, ipiv,
+			allocator, location
+		) or_return
+	} else { 
+
+		a_sig := n*n
+		b_sig := nrhs*n
+
+		a_s : []T
+		b_s : []T
+
+		for i in 0..<(md.size(a)/(a_sig)){
+			a_s = a.buffer[i*a_sig: i*a_sig+a_sig]
+			b_s = b.buffer[i*b_sig: i*b_sig+b_sig]
+
+			lapack_solve_wrapper(
+				a_s, b_s,
+				n_b, nrhs_b, ipiv,
+				allocator, location
+			) or_return
+		}
+	}
+
+	return true
+}
+
+
