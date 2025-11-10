@@ -183,7 +183,6 @@ test_lapack_det :: proc (t : ^testing.T){
 		arr_s := md.stack(2, []md.MdArray(f64, 2){arr, arr})
 		det, ok := nl.det(3, arr_s)
 
-		log.info(det)
 		testing.expect_value(t, det.buffer[0], 8)
 		testing.expect_value(t, det.buffer[1], 8)
 		md.free_mdarray(arr)
@@ -266,4 +265,53 @@ test_lapack_det :: proc (t : ^testing.T){
 		testing.expect_value(t, det, 0)
 		md.free_mdarray(arr)
 	}
+}
+
+
+@test
+test_lapack_inv :: proc (t : ^testing.T){
+
+	{
+		n:= 3
+
+		arr := md.from_slice([]f64{3, 2, 4, 2, 0, 2, 4, 2, 3}, [2]int{n, n})
+
+		inv := nl.inv(arr)
+
+		id := nl.matmul(inv, arr)
+		id_ := md.identity(f64, 3)
+
+		close := md.all_close(id, id_)
+		testing.expect(t, close )
+
+		md.free_mdarray(arr)
+		md.free_mdarray(inv)
+		md.free_mdarray(id)
+		md.free_mdarray(id_)
+	}
+
+	{
+		s:= 3
+		n:: 2
+
+		arr := md.reshaped_range(f64, [3]int{s, n, n})
+
+		inv := nl.inv(arr)
+
+
+		id := nl.matmul(inv, arr)
+		id_ := md.identity(f64, n)
+
+		for i in 0..<s{
+			n_id := md.slice_view(3, id, i)
+			close := md.all_close(id_, n_id)
+			testing.expect(t, close )
+		}
+
+		md.free_mdarray(arr)
+		md.free_mdarray(inv)
+		md.free_mdarray(id)
+		md.free_mdarray(id_)
+	}
+
 }

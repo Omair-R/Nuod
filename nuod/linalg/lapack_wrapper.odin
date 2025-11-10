@@ -381,7 +381,6 @@ lapack_lu_wrapper :: proc(
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
 
 	k := int(min(m, n))
-
 	
 	when ODIN_DEBUG {
 		if T != f32 && T != f64 && T != complex64 && T != complex128 {
@@ -452,6 +451,65 @@ lapack_lu_wrapper :: proc(
 			"the diagonal of the U matrix is exactly zero, do no use to solve a system of equation.",
 			location = location,
 		)
+		return false
+	}
+
+	return true
+}
+
+
+@private
+lapack_lu_inv_wrapper :: proc(
+	a: []$T,
+	n: lapacke.blasint,
+	ipiv : []lapacke.blasint,
+	location:= #caller_location,
+)->(
+	ok: bool
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
+
+	lda := n
+
+	lapack_lu_wrapper(a, n, n, ipiv, location) or_return	
+
+	info : lapacke.blasint
+	when T == f32{
+		info = lapacke.sgetri(
+			lapacke.LAPACK_ROW_MAJOR,
+			n,
+			raw_data(a), lda,
+			raw_data(ipiv)
+		)
+	} else when T == f64{
+		info = lapacke.dgetri(
+			lapacke.LAPACK_ROW_MAJOR,
+			n,
+			raw_data(a), lda,
+			raw_data(ipiv)
+		)
+	} else when T == complex64{
+		info = lapacke.cgetri(
+			lapacke.LAPACK_ROW_MAJOR,
+			n,
+			raw_data(a), lda,
+			raw_data(ipiv)
+		)
+	} else when T == complex128{
+		info = lapacke.zgetri(
+			lapacke.LAPACK_ROW_MAJOR,
+			n,
+			raw_data(a), lda,
+			raw_data(ipiv)
+		)
+	}
+
+	if info > 0 {
+		logging.error(
+			.ArithmeticError,
+			"Matrix is singular, there is no inverse.",
+			location= location,
+		)
+		return
 	}
 
 	return true
