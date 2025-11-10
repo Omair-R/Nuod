@@ -434,3 +434,81 @@ test_lapack_solve :: proc (t : ^testing.T){
 		md.free_mdarray(sol_)
 	}
 }
+
+
+@test
+test_lapack_lstsq :: proc (t : ^testing.T){
+
+	{
+		n:= 3
+
+		a := md.from_slice([]f64{3, 2, 4, 2, 0, 2, 4, 2, 3}, [2]int{n, n})
+		b := md.from_slice([]f64{1, 3, 2}, [1]int{n})
+		
+
+		sol, res, ok := nl.lstsq(a, b)
+		sol_ := md.from_slice([]f64{1.25, -1.875, 0.25}, [1]int{n})
+
+		close := md.all_close(sol, sol_)
+		testing.expect(t, close)
+	
+		md.free_mdarray(a)
+		md.free_mdarray(b)
+		md.free_mdarray(sol)
+		md.free_mdarray(sol_)
+	}
+
+	{
+		m:= 3
+		n:= 2
+
+		a := md.from_slice([]f64{3, 2, 2, 0, 4, 2}, [2]int{m, n})
+		b := md.from_slice([]f64{1, 3, 2}, [1]int{m})
+		
+
+		sol, res, ok := nl.lstsq(a, b)
+		sol_ := md.from_slice([]f64{1.444444444444, -1.77777777777778}, [1]int{2})
+
+		close := md.all_close(sol, sol_)
+		testing.expect(t, close)
+
+		res_ := md.fills(0.111111111111, [1]int{1})
+		close = md.all_close(res, res_)
+		testing.expect(t, close)
+
+		md.free_mdarray(a)
+		md.free_mdarray(b)
+		md.free_mdarray(sol)
+		md.free_mdarray(sol_)
+		md.free_mdarray(res)
+		md.free_mdarray(res_)
+	}
+
+	{
+		m:= 3
+		n:= 2
+
+		a := md.from_slice([]f64{3, 2, 2, 0, 4, 2}, [2]int{m, n})
+		b := md.from_slice([]f64{1, 1, 3, 3, 2, 2}, [2]int{m, 2})
+		
+
+		sol, res, ok := nl.lstsq(a, b)
+		sol_ := md.from_slice([]f64{
+			1.444444444444, 1.444444444444,
+			-1.77777777777778, -1.77777777777778}, [2]int{n, n})
+
+		close := md.all_close(sol, sol_)
+		testing.expect(t, close)
+
+		res_ := md.fills(0.111111111111, [1]int{2})
+		close = md.all_close(res, res_)
+		testing.expect(t, close)
+		md.free_mdarray(a)
+		md.free_mdarray(b)
+		md.free_mdarray(sol)
+		md.free_mdarray(sol_)
+		md.free_mdarray(res)
+		md.free_mdarray(res_)
+	}
+
+}

@@ -600,3 +600,172 @@ lapack_solve_wrapper :: proc(
 }
 
 
+@private
+lapack_lstsq_wrapper :: proc(
+	a: []$T,
+	b: []T,
+	m, n, nrhs: lapacke.blasint,
+	allocator:=context.allocator,
+	location:= #caller_location,
+)->(
+	ok: bool
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
+
+	if T != f32 && T != f64 && T != complex64 && T != complex128 {
+		logging.error(
+			.ArguementError,
+			"OpenBlas functions only support f32 and f64 types.",
+			location = location,
+		)
+		return
+	}
+
+	when ODIN_DEBUG {
+		if nrhs <= 0 || n <= 0 {
+			logging.error(
+				.ArguementError,
+				"m, n cannot be set to <= 0.",
+				location = location,
+			)
+			return 
+		}
+	}
+
+	lda := n
+	ldb := nrhs
+	
+	info : lapacke.blasint
+
+	when T == f32{
+		info = lapacke.sgels(
+			lapacke.LAPACK_ROW_MAJOR,
+			'N', m, n, nrhs,
+			raw_data(a), lda,
+			raw_data(b), ldb
+		)
+	} else when T == f64{
+		info = lapacke.dgels(
+			lapacke.LAPACK_ROW_MAJOR,
+			'N', m, n, nrhs,
+			raw_data(a), lda,
+			raw_data(b), ldb
+		)
+	} else when T == complex64{
+		info = lapacke.cgels(
+			lapacke.LAPACK_ROW_MAJOR,
+			'N', m, n, nrhs,
+			raw_data(a), lda,
+			raw_data(b), ldb
+		)
+	} else when T == complex128{
+		info = lapacke.zgels(
+			lapacke.LAPACK_ROW_MAJOR,
+			'N', m, n, nrhs,
+			raw_data(a), lda,
+			raw_data(b), ldb
+		)
+	}
+
+	if info != 0 {
+		logging.error(
+			.ArithmeticError,
+			"Matrix A is singular, resulting in a division by 0.",
+			location = location,
+		)
+		return
+	}
+
+	return true
+}
+
+
+@private
+lapack_lstsq_d_wrapper :: proc(
+	a: []$T,
+	b: []T,
+	m, n, nrhs: lapacke.blasint,
+	s: []T,
+	rcond: T,
+	allocator:=context.allocator,
+	location:= #caller_location,
+)->(
+	ok: bool
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
+
+	if T != f32 && T != f64 && T != complex64 && T != complex128 {
+		logging.error(
+			.ArguementError,
+			"OpenBlas functions only support f32 and f64 types.",
+			location = location,
+		)
+		return
+	}
+
+	when ODIN_DEBUG {
+		if nrhs <= 0 || n <= 0 {
+			logging.error(
+				.ArguementError,
+				"m, n cannot be set to <= 0.",
+				location = location,
+			)
+			return 
+		}
+	}
+
+	lda := n
+	ldb := nrhs
+
+	rank : lapacke.blasint
+	info : lapacke.blasint
+
+	when T == f32{
+		info = lapacke.sgelsd(
+			lapacke.LAPACK_ROW_MAJOR,
+			m, n, nrhs,
+			raw_data(a), lda,
+			raw_data(b), ldb,
+			raw_data(s), rcond,
+			&rank 
+		)
+	} else when T == f64{
+		info = lapacke.dgelsd(
+			lapacke.LAPACK_ROW_MAJOR,
+			m, n, nrhs,
+			raw_data(a), lda,
+			raw_data(b), ldb,
+			raw_data(s), rcond, 
+			&rank 
+		)
+	} else when T == complex64{
+		info = lapacke.cgelsd(
+			lapacke.LAPACK_ROW_MAJOR,
+			m, n, nrhs,
+			raw_data(a), lda,
+			raw_data(b), ldb,
+			raw_data(s), rcond, 
+			&rank 
+		)
+	} else when T == complex128{
+		info = lapacke.zgelsd(
+			lapacke.LAPACK_ROW_MAJOR,
+			m, n, nrhs,
+			raw_data(a), lda,
+			raw_data(b), ldb,
+			raw_data(s), rcond, 
+			&rank 
+		)
+	}
+
+	if info != 0 {
+		logging.error(
+			.ArithmeticError,
+			"Matrix A is singular, resulting in a division by 0.",
+			location = location,
+		)
+		return
+	}
+
+	return true
+}
+
+

@@ -400,3 +400,113 @@ lapacke_solve :: proc(
 }
 
 
+lstsq :: proc(
+	a: md.MdArray($T, 2),
+	b: md.MdArray(T, $Md),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	 solution:md.MdArray(T, Md),
+	 residual: md.MdArray(T, 1),
+	 ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), (Md==2 || Md==1) {			
+
+	validate_open_blas(a, allocator, location) or_return
+	md.validate_initialized(b, location) or_return
+	
+	m:= a.shape[0]
+	n:= a.shape[1]
+
+	if m < n {
+		logging.error(
+			.NotImplemented,
+			"Solution routines to overdetermined problems aren't supported yet.",
+			location,
+		)
+		return
+	}
+
+	if b.shape[0] != m {
+		logging.error(
+			.ArguementError,
+			"Incorrect dimensions for inputs..",
+			location
+		)
+		return
+	}
+
+	a_ := md.copy_array(a, allocator, location) or_return		
+	defer md.free_mdarray(a_)
+
+	b_ := md.copy_array(b, allocator, location) or_return		
+	defer md.free_mdarray(b_)
+
+	solution, residual = lapacke_lstsq(a_, b_, allocator, location) or_return 
+
+	return solution, residual, true
+}
+
+
+
+@(private="file")
+lapacke_lstsq :: proc(
+	a: md.MdArray($T, 2),
+	b: md.MdArray(T, $Md),
+	allocator:= context.allocator,
+	location := #caller_location,
+) -> (
+	solution: md.MdArray(T, Md),
+	residual: md.MdArray(T, 1),
+	ok:bool,
+) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
+
+	m:= a.shape[0]
+	n:= a.shape[1]
+
+	sol_shape : [Md]int
+
+	when Md == 2 {
+		nrhs:= b.shape[Md-1]
+		sol_shape[Md-2] = n
+		sol_shape[Md-1] = nrhs
+	} else {
+		nrhs := 1
+		sol_shape[Md-1] = n
+	}
+
+	res_shape : [1]int
+	res_shape[0] = nrhs
+
+	m_b:= lapacke.blasint(m)
+	n_b:= lapacke.blasint(n)
+	nrhs_b:= lapacke.blasint(nrhs)
+	
+	solution = md.make_mdarray(T, sol_shape, allocator, location)
+
+	lapack_lstsq_wrapper(
+		a.buffer, b.buffer,
+		m_b, n_b, nrhs_b,
+		allocator, location
+	) or_return
+
+	if m>n {
+		copy(solution.buffer, b.buffer[:nrhs*n])
+		
+		b_r := md.narrow(b, 0, n, location=location) or_return
+		md.i_sq(b_r, location) or_return
+
+		when Md == 2 {
+			residual = md.dim_reduce_sum_no_init(2, b_r, 0, allocator, location) or_return
+		} else {
+			residual = md.make_mdarray(T, [1]int{1}, allocator, location) or_return
+			residual.buffer[0] = md.all_reduce_sum(b_r)
+		}
+
+	} else {
+		copy(solution.buffer, b.buffer)
+	}
+
+	return solution, residual, true
+}
+
+
