@@ -226,6 +226,17 @@ test_lapack_det :: proc (t : ^testing.T){
 	{
 		n:= 2
 
+		arr := md.from_slice([]f64{3, 8, 4, 6}, [2]int{n, n})
+
+		det, ok := nl.det(arr)
+
+		testing.expect_value(t, det, -14)
+		md.free_mdarray(arr)
+	}
+
+	{
+		n:= 2
+
 		arr := md.from_slice([]f64{2, 2, 2, 1}, [2]int{n, n})
 
 		det, ok := nl.det(arr)
@@ -234,16 +245,16 @@ test_lapack_det :: proc (t : ^testing.T){
 		md.free_mdarray(arr)
 	}
 	
-	// {
-	// 	n:= 2
+	{
+		n:= 2
 
-	// 	arr := md.reshaped_range(f64, [2]int{n, n}, 1)
+		arr := md.reshaped_range(f64, [2]int{n, n}, 1)
 
-	// 	det, ok := nl.det(arr)
+		det, ok := nl.det(arr)
 
-	// 	testing.expect_value(t, det, -2)
-	// 	md.free_mdarray(arr)
-	// }
+		testing.expect_value(t, det, -2)
+		md.free_mdarray(arr)
+	}
 
 	{
 		n:= 3
@@ -510,5 +521,5 @@ test_lapack_lstsq :: proc (t : ^testing.T){
 		md.free_mdarray(res)
 		md.free_mdarray(res_)
 	}
-
+	
 }

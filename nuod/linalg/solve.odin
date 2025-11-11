@@ -138,10 +138,12 @@ lapacke_det_matrix :: proc(
 	) or_return
 
 	de = 1
+	// Lapack seems to return 32 bit integers despite documenting otherwise
+	ipiv_t := transmute([]i32)ipiv
 
 	for i in 0..<n{
 		de *= a.buffer[i*n+i]
-		if ipiv[i] != lapacke.blasint(i) do de *= -1
+		if ipiv_t[i] != i32(i+1) do de *= -1
 	}
 
 	return de, true
@@ -420,7 +422,7 @@ lstsq :: proc(
 	if m < n {
 		logging.error(
 			.NotImplemented,
-			"Solution routines to overdetermined problems aren't supported yet.",
+			"Solution routines for underdetermined problems aren't supported yet.",
 			location,
 		)
 		return
