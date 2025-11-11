@@ -4,6 +4,21 @@ import "base:intrinsics"
 import "core:math"
 
 
+/*
+Perform a custom element-wise binary operation on two different arrays.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- f: a binary procedure with arguments.
+- args: arguments to be passed to the passed procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 element_wise_map :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -30,6 +45,21 @@ element_wise_map :: proc(
 }
 
 
+/*
+Perform a custom element-wise binary operation on an arrays and a scalar.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- f: a binary procedure with arguments.
+- args: arguments to be passed to the passed procedure.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 scalar_map :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -122,6 +152,21 @@ inner_heaviside :: #force_inline proc($T: typeid) -> proc(_: T, _: T, _: ..T) ->
 }
 
 
+/*
+Perform an element-wise addition operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 add_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -135,6 +180,21 @@ add_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise subtraction operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 subtract_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -148,6 +208,21 @@ subtract_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise multiplication operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 mul_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -161,6 +236,21 @@ mul_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise division operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 div_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -174,6 +264,21 @@ div_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise modulus operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 mod_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -187,6 +292,21 @@ mod_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise minimum operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 min_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -200,6 +320,21 @@ min_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise maximum operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 max_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -213,6 +348,21 @@ max_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise logarithmic sum of exponentials operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 logaddexp_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -226,6 +376,21 @@ logaddexp_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise greatest common denominator operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 gcd_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -239,6 +404,21 @@ gcd_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise least common multiple operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 lcm_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -252,6 +432,21 @@ lcm_arrays :: proc(
 }
 
 
+/*
+Find the element-wise hypotenuse operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 hypot_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -265,6 +460,21 @@ hypot_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise arctan2 operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 atan2_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -278,6 +488,21 @@ atan2_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise Heaviside step operation on two different arrays.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 heaviside_arrays :: proc(
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -291,6 +516,21 @@ heaviside_arrays :: proc(
 }
 
 
+/*
+Perform an element-wise addition operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 add_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -304,6 +544,21 @@ add_arrays_scalar :: proc(
 }
 
 
+/*
+Perform an element-wise subtraction operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 subtract_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -317,6 +572,21 @@ subtract_arrays_scalar :: proc(
 }
 
 
+/*
+Perform an element-wise multiplication operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 mul_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -330,6 +600,21 @@ mul_arrays_scalar :: proc(
 }
 
 
+/*
+Perform an element-wise division operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 div_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -343,6 +628,21 @@ div_arrays_scalar :: proc(
 }
 
 
+/*
+Perform an element-wise modulus operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 mod_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -356,6 +656,21 @@ mod_arrays_scalar :: proc(
 }
 
 
+/*
+Perform an element-wise minimum operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 min_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -369,6 +684,21 @@ min_arrays_scalar :: proc(
 }
 
 
+/*
+Perform an element-wise maximum operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 max_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -382,6 +712,21 @@ max_arrays_scalar :: proc(
 }
 
 
+/*
+Perform an element-wise logarithmic sum of exponentials operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 logaddexp_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -395,6 +740,21 @@ logaddexp_arrays_scalar :: proc(
 }
 
 
+/*
+Perform an element-wise greatest common denominator operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 gcd_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -408,6 +768,21 @@ gcd_arrays_scalar :: proc(
 }
 
 
+/*
+Perform an element-wise least common multiple operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 lcm_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -421,6 +796,21 @@ lcm_arrays_scalar :: proc(
 }
 
 
+/*
+Find the element-wise hypotenuse operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 hypot_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -434,6 +824,21 @@ hypot_arrays_scalar :: proc(
 }
 
 
+/*
+Perform an element-wise atan2 operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 atan2_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -447,6 +852,21 @@ atan2_arrays_scalar :: proc(
 }
 
 
+/*
+Perform an element-wise Heaviside step operation on an arrays and a scalar.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 heaviside_arrays_scalar :: proc(
 	a: MdArray($T, $Nd),
 	b: T,
@@ -459,7 +879,21 @@ heaviside_arrays_scalar :: proc(
 	return scalar_map(a, b, inner_heaviside(T), flip=false, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise addition operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 add_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -472,7 +906,21 @@ add_scalar_array :: proc(
 	return scalar_map(b, a, inner_add(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise subtraction operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 subtract_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -485,7 +933,21 @@ subtract_scalar_array :: proc(
 	return scalar_map(b, a, inner_subtract(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise multiplication operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 mul_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -498,7 +960,21 @@ mul_scalar_array :: proc(
 	return scalar_map(b, a, inner_mul(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise division operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 div_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -511,7 +987,21 @@ div_scalar_array :: proc(
 	return scalar_map(b, a, inner_div(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise modulus operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 mod_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -524,7 +1014,21 @@ mod_scalar_array :: proc(
 	return scalar_map(b, a, inner_mod(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise minimum operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 min_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -537,7 +1041,21 @@ min_scalar_array :: proc(
 	return scalar_map(b, a, inner_min(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise maximum operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 max_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -550,7 +1068,21 @@ max_scalar_array :: proc(
 	return scalar_map(b, a, inner_max(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise logarithmic sum of exponentials operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 logaddexp_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -563,7 +1095,21 @@ logaddexp_scalar_array :: proc(
 	return scalar_map(b, a, inner_logaddexp(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise greatest common denominator operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 gcd_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -576,7 +1122,21 @@ gcd_scalar_array :: proc(
 	return scalar_map(b, a, inner_gcd(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise least common multiple operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 lcm_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -589,7 +1149,21 @@ lcm_scalar_array :: proc(
 	return scalar_map(b, a, inner_lcm(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Find the element-wise hypotenuse operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 hypot_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -602,7 +1176,21 @@ hypot_scalar_array :: proc(
 	return scalar_map(b, a, inner_hypot(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise atan2 operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 atan2_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),
@@ -615,7 +1203,21 @@ atan2_scalar_array :: proc(
 	return scalar_map(b, a, inner_atan2(T), flip=true, allocator = allocator, location = location)
 }
 
+/*
+Perform an element-wise Heaviside step operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 heaviside_scalar_array :: proc(
 	a: $T,
 	b: MdArray(T, $Nd),

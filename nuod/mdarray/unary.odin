@@ -205,7 +205,6 @@ Apply the sign operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -229,7 +228,6 @@ Apply the sign operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -250,7 +248,6 @@ Apply the negating operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -274,7 +271,6 @@ Apply the negating operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -295,7 +291,6 @@ Apply the absolute operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -319,7 +314,6 @@ Apply the absolute operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -341,7 +335,6 @@ Apply the square operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -365,7 +358,6 @@ Apply the square operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -386,7 +378,6 @@ Apply the square root operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -410,7 +401,6 @@ Apply the square root operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -431,7 +421,6 @@ Apply the cube root operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -455,7 +444,6 @@ Apply the cube root operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -476,7 +464,6 @@ Apply the exponential operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -500,7 +487,6 @@ Apply the exponential operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -521,7 +507,6 @@ Apply the exponential operator (base of 2) to all elements in the array out of p
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -545,7 +530,6 @@ Apply the exponential operator (base of 2) to all elements in the array in place
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -566,7 +550,6 @@ Apply the natural logarithm operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -590,7 +573,6 @@ Apply the natural logarithm operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -611,7 +593,6 @@ Apply the logarithm operator (base of 2) to all elements in the array out of pla
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -635,7 +616,6 @@ Apply the logarithm operator (base of 2) to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -656,7 +636,6 @@ Apply the logarithm operator (base of 10) to all elements in the array out of pl
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -680,7 +659,6 @@ Apply the logarithm operator (base of 10) to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -701,7 +679,6 @@ Apply the natural logarithm operator with one plus to all elements in the array 
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -725,7 +702,6 @@ Apply the natural logarithm operator with one plus to all elements in the array 
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -746,7 +722,6 @@ Apply the reciprocal operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -770,7 +745,6 @@ Apply the reciprocal operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -793,7 +767,6 @@ Apply the sine operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -817,7 +790,6 @@ Apply the sine operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -838,7 +810,6 @@ Apply the cosine operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -862,7 +833,6 @@ Apply the cosine operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -883,7 +853,6 @@ Apply the tan operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -907,7 +876,6 @@ Apply the tan operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -928,7 +896,6 @@ Apply the arcsine operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -952,7 +919,6 @@ Apply the arcsine operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -973,7 +939,6 @@ Apply the arccosine operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -997,7 +962,6 @@ Apply the arccosine operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -1018,7 +982,6 @@ Apply the arctan operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -1042,7 +1005,6 @@ Apply the arctan operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -1063,7 +1025,6 @@ Convert all elements in the array from radian to degress out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -1087,7 +1048,6 @@ Convert all elements in the array from radian to degress in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -1108,7 +1068,6 @@ Convert all elements in the array from degrees to radian out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -1132,7 +1091,6 @@ Convert all elements in the array from degrees to radian in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -1155,7 +1113,6 @@ Apply the hyperpolic sine operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -1179,7 +1136,6 @@ Apply the hyperpolic sine operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -1200,7 +1156,6 @@ Apply the hyperpolic cosine operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -1224,7 +1179,6 @@ Apply the hyperpolic cosine operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -1245,7 +1199,6 @@ Apply the hyperpolic tan operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -1269,7 +1222,6 @@ Apply the hyperpolic tan operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -1290,7 +1242,6 @@ Apply the hyperpolic arcsine operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -1314,7 +1265,6 @@ Apply the hyperpolic arcsine operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -1335,7 +1285,6 @@ Apply the hyperpolic arccosine operator to all elements in the array out of plac
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -1359,7 +1308,6 @@ Apply the hyperpolic arccosine operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -1380,7 +1328,6 @@ Apply the hyperpolic arctan operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -1404,7 +1351,6 @@ Apply the hyperpolic arctan operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -1427,7 +1373,6 @@ Apply the conjugate operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -1451,7 +1396,6 @@ Apply the conjugate operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:
@@ -1472,7 +1416,6 @@ Apply the sine cardinal operator to all elements in the array out of place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -1496,7 +1439,6 @@ Apply the sine cardinal operator to all elements in the array in place.
 
 Inputs:
 - mdarray: a multidimensional array.
-- f: a unary procedure.
 - location: a debugging variable used to trace the location of the calling procedure.
 
 Returns:

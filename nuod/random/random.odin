@@ -104,7 +104,20 @@ casted_one_arg_wrapper :: proc(
 	return mdarray, true
 }
 
+/*
+Generate a multidimensional array and fill it with random integers.
 
+Inputs:
+- T: the type of integer to generate.
+- shape: the shape of generated array.
+- gen: the random number generator object.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: the generated array.
+- ok: an optional boolean for error handling.
+*/
 random_int :: proc(
 	$T : typeid,
 	shape: [$Nd]int,
@@ -135,7 +148,22 @@ random_int :: proc(
 	}
 }
 
+/*
+Generate a multidimensional array and fill it with random integers capped at a maximum.
 
+NOTE: the type of 'max_value' decides the type of generated array.
+
+Inputs:
+- max_value: the maximum integer value to generate.
+- shape: the shape of generated array.
+- gen: the random number generator object.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: the generated array.
+- ok: an optional boolean for error handling.
+*/
 random_int_max :: proc(
 	max_value: $T,
 	shape: [$Nd]int,
@@ -166,7 +194,21 @@ random_int_max :: proc(
 	}
 }
 
+/*
+Generate a multidimensional array and fill it with random floatpoint values in 
+between 0 and 1.
 
+Inputs:
+- T: the type of floatpoint value to generate.
+- shape: the shape of generated array.
+- gen: the random number generator object.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: the generated array.
+- ok: an optional boolean for error handling.
+*/
 random_float :: proc(
 	$T : typeid,
 	shape: [$Nd]int,
@@ -187,6 +229,24 @@ random_float :: proc(
 	}
 }
 
+/*
+Generate a multidimensional array and fill it with random floatpoint values in 
+between an low and high value.
+
+NOTE: the type of 'low' and 'high' decides the type of generated array.
+
+Inputs:
+- low: the lowest floatpoint value to generate.
+- high: the highest floatpoint value to generate.
+- shape: the shape of generated array.
+- gen: the random number generator object.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- mdarray: the generated array.
+- ok: an optional boolean for error handling.
+*/
 random_float_range :: proc(
 	low: $T,
 	high: T,

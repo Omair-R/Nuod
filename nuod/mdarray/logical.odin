@@ -12,7 +12,21 @@ inner_logical_and :: #force_inline proc (a: bool, b: bool, args:..bool) -> bool 
 inner_logical_or :: #force_inline proc (a: bool, b: bool, args:..bool) -> bool { return a || b}
 
 
+/*
+Perform an element-wise logical and operation on two different arrays.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 logical_and_arrays :: proc(	
 	a: MdArray(bool, $Nd),
 	b: MdArray(bool, Nd),
@@ -25,7 +39,21 @@ logical_and_arrays :: proc(
 	return element_wise_map(a, b, inner_logical_and, allocator=allocator, location=location)
 }
 
+/*
+Perform an element-wise logical and operation on an arrays and a scalar.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 logical_and_arrays_scalar :: proc(	
 	a: MdArray(bool, $Nd),
 	b: bool,
@@ -38,7 +66,21 @@ logical_and_arrays_scalar :: proc(
 	return scalar_map(a, b, inner_logical_and, flip=false, allocator=allocator, location=location)
 }
 
+/*
+Perform an element-wise logical and operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 logical_and_scalar_array :: proc(	
 	a: bool,
 	b: MdArray(bool, $Nd),
@@ -51,7 +93,21 @@ logical_and_scalar_array :: proc(
 	return scalar_map(b, a, inner_logical_and, flip=true, allocator=allocator, location=location)
 }
 
+/*
+Perform an element-wise logical or operation on two different arrays.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 logical_or_arrays :: proc(	
 	a: MdArray(bool, $Nd),
 	b: MdArray(bool, Nd),
@@ -64,7 +120,21 @@ logical_or_arrays :: proc(
 	return element_wise_map(a, b, inner_logical_or, allocator=allocator, location=location)
 }
 
+/*
+Perform an element-wise logical or operation on an arrays and a scalar.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 logical_or_arrays_scalar :: proc(	
 	a: MdArray(bool, $Nd),
 	b: bool,
@@ -77,7 +147,21 @@ logical_or_arrays_scalar :: proc(
 	return scalar_map(a, b, inner_logical_or, flip=false, allocator=allocator, location=location)
 }
 
+/*
+Perform an element-wise logical or operation on a scalar and an array.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: a multidimensional array.
+- b: a scalar value.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 logical_or_scalar_array :: proc(	
 	a: bool,
 	b: MdArray(bool, $Nd),
@@ -94,7 +178,17 @@ logical_or_scalar_array :: proc(
 logical_and :: proc {logical_and_arrays, logical_and_arrays_scalar, logical_and_scalar_array}
 logical_or :: proc {logical_or_arrays, logical_or_arrays_scalar, logical_or_scalar_array}
 
+/*
+Verify that all elements in a boolean array are set to true.
 
+Inputs:
+- mdarray: a multidimensional boolean array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: a boolean representing that all elements are set to true.
+- ok: an optional boolean for error handling.
+*/
 all :: proc(
 	mdarray: MdArray(bool, $Nd),
 	location := #caller_location,
@@ -112,6 +206,17 @@ all :: proc(
 	return true, true
 }
 
+/*
+Verify that at least one element in a boolean array are set to true.
+
+Inputs:
+- mdarray: a multidimensional boolean array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- accum: a boolean representing that any element is set to true.
+- ok: an optional boolean for error handling.
+*/
 any :: proc(
 	mdarray: MdArray(bool, $Nd),
 	location := #caller_location,
@@ -149,6 +254,17 @@ inner_is_close_c :: #force_inline proc($T: typeid) -> (
 	}
 }
 
+/*
+Get the default tolerance values set by Nuod
+
+Inputs:
+- T: first multidimensional array.
+
+Returns:
+- rtol: the default relative tolerance.
+- atol: the default absolute tolerance.
+- ok: an optional boolean for error handling.
+*/
 get_default_tol :: #force_inline proc "contextless"($T: typeid) -> (
 	rtol, atol: f64,
 	ok: bool,
@@ -175,7 +291,22 @@ get_default_tol :: #force_inline proc "contextless"($T: typeid) -> (
 }
 
 
-@private
+/*
+Verify in an element-wise manner that the elements in two different arrays are
+close to each other based on the defualt tolerances.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 is_close_default :: proc(	
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -192,7 +323,24 @@ is_close_default :: proc(
 }
 
 
-@private
+/*
+Verify in an element-wise manner that the elements in two different arrays are
+close to each other based on custom tolerance values provided by the user.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- rtol: the relative tolerance.
+- atol: the absolute tolerance.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 is_close_with_args :: proc(	
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -216,7 +364,22 @@ is_close_with_args :: proc(
 	}
 }
 
+/*
+Verify that all the elements in two different arrays are close to each other
+ based on the defualt tolerances.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 all_close_default :: proc(	
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),
@@ -231,7 +394,24 @@ all_close_default :: proc(
 	return all_close_with_args(a, b, rtol, atol, location=location)
 }
 
+/*
+Verify that all the elements in two different arrays are close to each other
+ based on custom tolerance values provided by the user.
 
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- a: first multidimensional array.
+- b: second multidimensional array.
+- rtol: the relative tolerance.
+- atol: the absolute tolerance.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant array.
+- ok: an optional boolean for error handling.
+*/
 all_close_with_args :: proc(	
 	a: MdArray($T, $Nd),
 	b: MdArray(T, Nd),

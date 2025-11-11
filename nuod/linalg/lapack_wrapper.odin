@@ -289,7 +289,7 @@ lapack_svd_wrapper :: proc(
 	return true
 }
 
-
+@private
 lapack_eig_wrapper_f :: proc(
 	a: []$T,
 	n: lapacke.blasint,

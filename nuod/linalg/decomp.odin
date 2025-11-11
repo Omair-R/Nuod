@@ -8,6 +8,7 @@ import "../logging"
 import lapacke "../lapacke"
 
 
+@private
 validate_open_blas :: proc(
 	a: md.MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -39,6 +40,20 @@ validate_open_blas :: proc(
 }
 
 
+/*
+Compute the QR decomposition of a matrix or a stack of matrices. A stack of any form
+may be passed.
+
+Inputs:
+- a: a matrix or stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- q: the Q orthogonal matrix.
+- r: the R right upper triangular matrix.
+- ok: an optional boolean for error handling.
+*/
 qr :: proc(	
 	a: md.MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -131,7 +146,22 @@ lapacke_qr :: proc(
 	return q, r, true
 }
 
+/*
+Compute the full SVD decomposition of a matrix or a stack of matrices. A stack of 
+any form may be passed.
 
+Inputs:
+- Nd: the number of dimensions of the passed matrix.
+- a: a matrix or stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- s: the singular values of the matrix in vector form.
+- u: the U unitary matrix.
+- vt: the transpose of the V unitary matrix.
+- ok: an optional boolean for error handling.
+*/
 full_svd :: proc(	
 	$Nd: int,
 	a: md.MdArray($T, Nd),
@@ -153,7 +183,22 @@ full_svd :: proc(
 	return _inner_svd(Nd, a_, .Full, allocator, location) 	
 }
 
+/*
+Compute the reduced form of the SVD decomposition of a matrix or a stack of matrices. 
+A stack of any form may be passed.
 
+Inputs:
+- Nd: the number of dimensions of the passed matrix.
+- a: a matrix or stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- s: the singular values of the matrix in vector form.
+- u: the U unitary matrix.
+- vt: the transpose of the V unitary matrix.
+- ok: an optional boolean for error handling.
+*/
 reduced_svd :: proc(	
 	$Nd: int,
 	a: md.MdArray($T, Nd),
@@ -175,7 +220,20 @@ reduced_svd :: proc(
 	return _inner_svd(Nd, a_, .Reduced, allocator, location) 	
 }
 
+/*
+Compute the singular values of the SVD decomposition of a matrix or a stack of 
+matrices. A stack of any form may be passed.
 
+Inputs:
+- Nd: the number of dimensions of the passed matrix.
+- a: a matrix or stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- s: the singular values of the matrix in vector form.
+- ok: an optional boolean for error handling.
+*/
 svd_vals :: proc(	
 	$Nd: int,
 	a: md.MdArray($T, Nd),
@@ -326,7 +384,7 @@ _inner_svd :: proc(
 	return s, u, vt, true	
 }
 
-
+@private
 fill_eig_slices :: proc(
 	e_vals: []$C,
 	e_vecs: []C,
@@ -353,7 +411,21 @@ fill_eig_slices :: proc(
 	}
 }
 
+/*
+Compute the eigen values and right eigen vectors of an f32 matrix or a stack of 
+matrices. A stack of any form may be passed.
 
+Inputs:
+- Nd: the number of dimensions of the passed matrix.
+- a: an f32 matrix or stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- eig_vals: the eigen values.
+- eig_vecs: the right eigen vectors.
+- ok: an optional boolean for error handling.
+*/
 eig_f32 :: proc(
 	$Nd: int,
 	a: md.MdArray(f32, Nd),
@@ -367,7 +439,21 @@ eig_f32 :: proc(
 	return _inner_eig(Nd, complex64, a, allocator, location)
 }
 
+/*
+Compute the eigen values and right eigen vectors of an f64 matrix or a stack of 
+matrices. A stack of any form may be passed.
 
+Inputs:
+- Nd: the number of dimensions of the passed matrix.
+- a: an f64 matrix or stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- eig_vals: the eigen values.
+- eig_vecs: the right eigen vectors.
+- ok: an optional boolean for error handling.
+*/
 eig_f64 :: proc(
 	$Nd: int,
 	a: md.MdArray(f64, Nd),
@@ -385,6 +471,7 @@ eig_f64 :: proc(
 eig :: proc{ eig_f32, eig_f64 }
 
 
+@private
 _inner_eig :: proc(	
 	$Nd: int,
 	$C: typeid,
@@ -503,7 +590,20 @@ _inner_eig :: proc(
 	return 
 }
 
+/*
+Compute the eigen values of an f32 matrix or a stack of matrices. A stack 
+of any form may be passed.
 
+Inputs:
+- Nd: the number of dimensions of the passed matrix.
+- a: an f32 matrix or stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- eig_vals: the eigen values.
+- ok: an optional boolean for error handling.
+*/
 eigvals_f32 :: proc(
 	$Nd: int,
 	a: md.MdArray(f32, Nd),
@@ -516,7 +616,20 @@ eigvals_f32 :: proc(
 	return _inner_eigvals(Nd, complex64, a, allocator, location)
 }
 
+/*
+Compute the eigen values of an f64 matrix or a stack of matrices. A stack 
+of any form may be passed.
 
+Inputs:
+- Nd: the number of dimensions of the passed matrix.
+- a: an f64 matrix or stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- eig_vals: the eigen values.
+- ok: an optional boolean for error handling.
+*/
 eigvals_f64 :: proc(
 	$Nd: int,
 	a: md.MdArray(f64, Nd),
@@ -532,7 +645,7 @@ eigvals_f64 :: proc(
 
 eigvals :: proc{ eigvals_f32, eigvals_f64 }
 
-
+@private
 _inner_eigvals :: proc(	
 	$Nd: int,
 	$C: typeid,

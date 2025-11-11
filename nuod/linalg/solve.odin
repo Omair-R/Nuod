@@ -7,6 +7,18 @@ import md "../mdarray"
 import "../logging"
 import lapacke "../lapacke"
 
+/*
+Compute the determinant of a matrix.
+
+Inputs:
+- a: a matrix.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- de: the determinant value.
+- ok: an optional boolean for error handling.
+*/
 det_matrix :: proc(	
 	a: md.MdArray($T, 2),
 	allocator:= context.allocator,
@@ -33,7 +45,19 @@ det_matrix :: proc(
 	return lapacke_det_matrix(a_, allocator, location) 	
 }
 
+/*
+Compute the determinant of a stack of matrices. A stack of any form may be passed.
 
+Inputs:
+- Nd: the number of dimensions of the passed matrix.
+- a: a stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- de: the determinant values.
+- ok: an optional boolean for error handling.
+*/
 det_tensor :: proc(	
 	$Nd: int, 
 	a: md.MdArray($T, Nd),
@@ -65,7 +89,19 @@ det_tensor :: proc(
 
 det :: proc { det_matrix, det_tensor}
 
+/*
+Compute the sign and log determinant of a matrix.
 
+Inputs:
+- a: a matrix.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- sign: the sign of the determinant.
+- slog_de: the log of the absolute determinant.
+- ok: an optional boolean for error handling.
+*/
 slog_det_matrix :: proc(	
 	a: md.MdArray($T, 2),
 	allocator:= context.allocator,
@@ -86,7 +122,21 @@ slog_det_matrix :: proc(
 	return sign, slog_de, true 	
 }
 
+/*
+Compute the sign and log determinant of a stack of matrices. A stack of any 
+form may be passed.
 
+Inputs:
+- Nd: the number of dimensions of the passed matrix.
+- a: a stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- sign: the sign of the determinants.
+- slog_de: the log of the absolute determinants.
+- ok: an optional boolean for error handling.
+*/
 slog_det_tensor :: proc(	
 	$Nd: int, 
 	a: md.MdArray($T, Nd),
@@ -203,7 +253,19 @@ lapacke_det :: proc(
 }
 
 
+/*
+Compute the inverse of a matrix or a stack of matrices. A stack of any form
+may be passed.
 
+Inputs:
+- a: a matrix or stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- inv_a: the inverse of a.
+- ok: an optional boolean for error handling.
+*/
 inv :: proc(	
 	a: md.MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -283,7 +345,19 @@ lapacke_inv :: proc(
 	return true
 }
 
+/*
+Compute the Moore–Penrose inverse of a matrix or a stack of matrices. A stack of 
+any form may be passed.
 
+Inputs:
+- a: a matrix or stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- pinv_a: the Moore–Penrose inverse of a.
+- ok: an optional boolean for error handling.
+*/
 pinv :: proc(	
 	a: md.MdArray($T, $Nd),
 	allocator:= context.allocator,
@@ -321,15 +395,29 @@ pinv :: proc(
 	return pinv_a, true
 }
 
+/*
+Compute the solution of system of linear equations in matrix form (Ax = b). 
+A may be a square matrix or a stack of square matrices. b maybe a vector, multiple 
+vectors, a stack of vectors, or a stack of multiple vectors. 
 
+Inputs:
+- a: a matrix or stack of matrices.
+- b: a matrix or stack of matrices.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- solution: the solution for the system of linear equations.
+- ok: an optional boolean for error handling.
+*/
 solve :: proc(
 	a: md.MdArray($T, $Nd),
 	b: md.MdArray(T, $Md),
 	allocator:= context.allocator,
 	location := #caller_location,
 ) -> (
-	 solution:md.MdArray(T, Md),
-	 ok:bool,
+	 solution: md.MdArray(T, Md),
+	 ok: bool,
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T),
 		Nd>=2 && (Nd==Md || Md==Nd-1) #optional_ok{			
 

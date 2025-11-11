@@ -40,7 +40,19 @@ MatrixNorm :: enum{
 }
 
 
-// Diagonal
+/*
+Produce a diagonal matrix whose diagonal elements are populated based 
+on a one-dimensional array.
+
+Inputs:
+- mdarray: a one-dimenaional array.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant diagonal matrix.
+- ok: an optional boolean for error handling.
+*/
 make_diagonal :: proc(	
 	mdarray: md.MdArray($T, 1),
 	allocator := context.allocator,
@@ -61,7 +73,20 @@ make_diagonal :: proc(
 	return result, true
 }
 
-// Diagonal
+
+/*
+Extract the diagonal elements of a matrix.
+
+Inputs:
+- mdarray: a matrix of two dimensions.
+- offset: the offset from the main diagonal (may be negative).
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: a vector containing a copy of the diagonal elements.
+- ok: an optional boolean for error handling.
+*/
 matrix_diagonal :: proc(	
 	mdarray: md.MdArray($T, 2),
 	offset:=0,
@@ -93,7 +118,18 @@ matrix_diagonal :: proc(
 	return result, true
 }
 
-// Trace
+/*
+Extract the trace of a matrix.
+
+Inputs:
+- mdarray: a matrix of two dimensions.
+- offset: the offset from the main diagonal (may be negative).
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the trace value.
+- ok: an optional boolean for error handling.
+*/
 matrix_trace :: proc(	
 	mdarray: md.MdArray($T, 2),
 	offset:=0,
@@ -140,7 +176,17 @@ inner_l0 :: #force_inline  proc($T: typeid)-> proc(T, T, ..T)->T {
 	return #force_inline proc (accum: T, val: T, args: ..T) -> T { return accum +  (val==0? 0: 1) }
 }
 
+/*
+Find the euclidean norm of vector. Treats multidimensional arrays as one vector.
 
+Inputs:
+- mdarray: a multidimensional array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the array.
+- ok: an optional boolean for error handling.
+*/
 full_vector_euclidean_norm :: proc(	
 	mdarray: md.MdArray($T, $Nd),
 	location := #caller_location,
@@ -153,7 +199,17 @@ full_vector_euclidean_norm :: proc(
 	return norm_result, true
 }
 
+/*
+Find the manhattan norm of vector. Treats multidimensional arrays as one vector.
 
+Inputs:
+- mdarray: a multidimensional array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the array.
+- ok: an optional boolean for error handling.
+*/
 full_vector_manhattan_norm :: proc(	
 	mdarray: md.MdArray($T, $Nd),
 	location := #caller_location,
@@ -164,7 +220,17 @@ full_vector_manhattan_norm :: proc(
 	return md.all_reduce_map(mdarray, inner_manhattan(T), cast(T)0, location=location)
 }
 
+/*
+Find the chebyshev norm of vector. Treats multidimensional arrays as one vector.
 
+Inputs:
+- mdarray: a multidimensional array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the array.
+- ok: an optional boolean for error handling.
+*/
 full_vector_chebyshev_norm :: proc(	
 	mdarray: md.MdArray($T, $Nd),
 	location := #caller_location,
@@ -175,7 +241,17 @@ full_vector_chebyshev_norm :: proc(
 	return md.all_reduce_map(mdarray, inner_chebyshev(T), cast(T)0, location=location)
 }
 
+/*
+Find the L0 norm of vector. Treats multidimensional arrays as one vector.
 
+Inputs:
+- mdarray: a multidimensional array.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the array.
+- ok: an optional boolean for error handling.
+*/
 full_vector_l0_norm :: proc(	
 	mdarray: md.MdArray($T, $Nd),
 	location := #caller_location,
@@ -186,7 +262,19 @@ full_vector_l0_norm :: proc(
 	return md.all_reduce_map(mdarray, inner_l0(T), cast(T)0, location=location)
 }
 
+/*
+Find the norm of vector based on the selected norm type. Treats multidimensional 
+arrays as one vector.
 
+Inputs:
+- mdarray: a multidimensional array.
+- norm_type: the type of norm.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the array.
+- ok: an optional boolean for error handling.
+*/
 full_vector_norm :: proc(	
 	mdarray: md.MdArray($T, $Nd),
 	norm_type : VectorNorm = .Euclidean,
@@ -208,7 +296,20 @@ full_vector_norm :: proc(
 	return
 }
 
+/*
+Find the euclidean norm of an array along a certain axis.
 
+Inputs:
+- Nd: number of dimensions of the array.
+- mdarray: a multidimensional array.
+- axis: the axis dimension along which the norm is computed.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the normed array, reduced in dimensions by one.
+- ok: an optional boolean for error handling.
+*/
 dim_vector_euclidean_norm :: proc(
 	$Nd :int,
 	mdarray: md.MdArray($T, Nd),
@@ -223,7 +324,20 @@ dim_vector_euclidean_norm :: proc(
 	return norm_result, true
 }
 
+/*
+Find the manhattan norm of an array along a certain axis.
 
+Inputs:
+- Nd: number of dimensions of the array.
+- mdarray: a multidimensional array.
+- axis: the axis dimension along which the norm is computed.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the normed array, reduced in dimensions by one.
+- ok: an optional boolean for error handling.
+*/
 dim_vector_manhattan_norm :: proc(
 	$Nd :int,
 	mdarray: md.MdArray($T, Nd),
@@ -237,7 +351,20 @@ dim_vector_manhattan_norm :: proc(
 	return md.dim_reduce_map(Nd, mdarray, axis, inner_manhattan(T), cast(T)0, allocator=allocator, location=location) 
 }
 
+/*
+Find the chebyshev norm of an array along a certain axis.
 
+Inputs:
+- Nd: number of dimensions of the array.
+- mdarray: a multidimensional array.
+- axis: the axis dimension along which the norm is computed.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the normed array, reduced in dimensions by one.
+- ok: an optional boolean for error handling.
+*/
 dim_vector_chebyshev_norm :: proc(
 	$Nd :int,
 	mdarray: md.MdArray($T, Nd),
@@ -250,6 +377,20 @@ dim_vector_chebyshev_norm :: proc(
 	return md.dim_reduce_map(Nd, mdarray, axis, inner_chebyshev(T), cast(T)0, allocator=allocator, location=location)
 }
 
+/*
+Find the L0 norm of an array along a certain axis.
+
+Inputs:
+- Nd: number of dimensions of the array.
+- mdarray: a multidimensional array.
+- axis: the axis dimension along which the norm is computed.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the normed array, reduced in dimensions by one.
+- ok: an optional boolean for error handling.
+*/
 dim_vector_l0_norm :: proc(
 	$Nd :int,
 	mdarray: md.MdArray($T, Nd),
@@ -262,6 +403,21 @@ dim_vector_l0_norm :: proc(
 	return md.dim_reduce_map(Nd, mdarray, axis, inner_l0(T), cast(T)0, allocator=allocator, location=location)
 }
 
+/*
+Find the norm of an array along a certain axis based on the selected norm type.
+
+Inputs:
+- Nd: number of dimensions of the array.
+- mdarray: a multidimensional array.
+- axis: the axis dimension along which the norm is computed.
+- norm_type: the type of norm to compute.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the normed array, reduced in dimensions by one.
+- ok: an optional boolean for error handling.
+*/
 dim_vector_norm :: proc(
 	$Nd :int,
 	mdarray: md.MdArray($T, Nd),
@@ -288,7 +444,17 @@ dim_vector_norm :: proc(
 vector_norm :: proc{full_vector_norm, dim_vector_norm}
 
 
-// matrix norm
+/*
+Find the frobenius norm of a matrix.
+
+Inputs:
+- mdarray: a matrix.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the matrix.
+- ok: an optional boolean for error handling.
+*/
 frobenius_matrix_norm :: proc(	
 	mdarray: md.MdArray($T, 2),
 	location := #caller_location,
@@ -300,9 +466,21 @@ frobenius_matrix_norm :: proc(
 }
 
 
+/*
+Find the nuclear norm of a matrix.
+
+WARNING: This is not implemented yet.
+
+Inputs:
+- mdarray: a matrix.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the matrix.
+- ok: an optional boolean for error handling.
+*/
 nuclear_matrix_norm :: proc(	
 	mdarray: md.MdArray($T, 2),
-	allocator := context.allocator,
 	location := #caller_location,
 ) -> (
 	norm_result:T,
@@ -312,10 +490,21 @@ nuclear_matrix_norm :: proc(
 	return 
 }
 
+/*
+Find the spectral norm of a matrix.
 
+WARNING: This is not implemented yet.
+
+Inputs:
+- mdarray: a matrix.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the matrix.
+- ok: an optional boolean for error handling.
+*/
 spectral_matrix_norm :: proc(	
 	mdarray: md.MdArray($T, 2),
-	allocator := context.allocator,
 	location := #caller_location,
 ) -> (
 	norm_result:T,
@@ -348,7 +537,18 @@ infty_first_matrix_norm_selector :: proc(
 	}
 }
 
+/*
+Find the infinity norm of a matrix.
 
+Inputs:
+- mdarray: a matrix.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the matrix.
+- ok: an optional boolean for error handling.
+*/
 infty_matrix_norm :: proc(	
 	mdarray: md.MdArray($T, 2),
 	allocator := context.allocator,
@@ -366,7 +566,18 @@ infty_matrix_norm :: proc(
 	)
 }
 
+/*
+Find the first norm of a matrix.
 
+Inputs:
+- mdarray: a matrix.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the matrix.
+- ok: an optional boolean for error handling.
+*/
 first_matrix_norm :: proc(	
 	mdarray: md.MdArray($T, 2),
 	allocator := context.allocator,
@@ -384,7 +595,18 @@ first_matrix_norm :: proc(
 	)
 }
 
+/*
+Find the negative infinity norm of a matrix.
 
+Inputs:
+- mdarray: a matrix.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the matrix.
+- ok: an optional boolean for error handling.
+*/
 neg_infty_matrix_norm :: proc(	
 	mdarray: md.MdArray($T, 2),
 	allocator := context.allocator,
@@ -402,7 +624,18 @@ neg_infty_matrix_norm :: proc(
 	)
 }
 
+/*
+Find the negative first norm of a matrix.
 
+Inputs:
+- mdarray: a matrix.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the matrix.
+- ok: an optional boolean for error handling.
+*/
 neg_first_matrix_norm :: proc(	
 	mdarray: md.MdArray($T, 2),
 	allocator := context.allocator,
@@ -420,7 +653,19 @@ neg_first_matrix_norm :: proc(
 	)
 }
 
+/*
+Find the norm of a matrix based on the selected matrix norm.
 
+Inputs:
+- mdarray: a matrix.
+- norm_type: the type of norm.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the norm of the matrix.
+- ok: an optional boolean for error handling.
+*/
 matrix_norm :: proc(	
 	mdarray: md.MdArray($T, 2),
 	norm_type:MatrixNorm = MatrixNorm.Frobenius,
