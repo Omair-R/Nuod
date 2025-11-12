@@ -11,13 +11,12 @@ import "core:c"
 
 when ODIN_OS == .Windows {
 	foreign import openblas "../vendors/openblas/lib/libopenblas.lib"
-} else when ODIN_OS == .Linux {
-	foreign import openblas "system:openblas"
-} else when ODIN_OS == .Darwin {
+} else when ODIN_OS == .Linux || ODIN_OS == .Darwin || ODIN_OS == .FreeBSD{
 	foreign import openblas "system:openblas"
 }
 
-when ODIN_OS == .Windows || ODIN_OS == .Darwin || ODIN_OS == .Linux{
+when ODIN_OS == .Windows || ODIN_OS == .Darwin ||
+	 ODIN_OS == .Linux || ODIN_OS == .FreeBSD {
 	OPENBLAS_SUPPORTED :: true
 } else {
 	OPENBLAS_SUPPORTED :: false
