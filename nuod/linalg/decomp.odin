@@ -1,43 +1,9 @@
 package linalg
 
-import "core:slice"
-import "core:math"
 import "base:intrinsics"
 import md "../mdarray"
 import "../logging"
 import lapacke "../lapacke"
-
-
-@private
-validate_open_blas :: proc(
-	a: md.MdArray($T, $Nd),
-	allocator:= context.allocator,
-	location := #caller_location,
-) -> (ok: bool) {
-	
-	md.validate_initialized(a, location) or_return
-
-
-	if !lapacke.OPENBLAS_SUPPORTED {
-		logging.error(
-			.NotImplemented,
-			"Decomposion operations are only implemented with openblas support.",
-			location,
-		)
-		return
-	}
-
-	when !(T == f32 || T == f64 || T == complex64 || T== complex128){
-		logging.error(
-			.ArguementError,
-			"openblas routines do not support half precision routines.",
-			location,
-		)
-		return
-	}
-
-	return true
-}
 
 
 /*
@@ -64,7 +30,7 @@ qr :: proc(
 	 ok:bool,
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
 
-	validate_open_blas(a, allocator, location) or_return
+	validate_general_openblas(a, allocator, location) or_return
 
 	a_ := md.copy_array(a, allocator, location) or_return
 	defer md.free_mdarray(a_)
@@ -174,7 +140,7 @@ full_svd :: proc(
 	 ok:bool,
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
 
-	validate_open_blas(a, allocator, location) or_return
+	validate_general_openblas(a, allocator, location) or_return
 
 	// Lapack will fill the array since it uses it as a work area.
 	a_ := md.copy_array(a, allocator, location) or_return
@@ -211,7 +177,7 @@ reduced_svd :: proc(
 	 ok:bool,
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
 
-	validate_open_blas(a, allocator, location) or_return
+	validate_general_openblas(a, allocator, location) or_return
 
 	// Lapack will fill the array since it uses it as a work area.
 	a_ := md.copy_array(a, allocator, location) or_return
@@ -244,7 +210,7 @@ svd_vals :: proc(
 	 ok:bool,
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 #optional_ok {
 
-	validate_open_blas(a, allocator, location) or_return
+	validate_general_openblas(a, allocator, location) or_return
 
 	// Lapack will fill the array since it uses it as a work area.
 	a_ := md.copy_array(a, allocator, location) or_return
@@ -483,46 +449,11 @@ _inner_eig :: proc(
 	 eig_vecs:md.MdArray(C, Nd),
 	 ok:bool,
 ) where intrinsics.type_is_float(F) || intrinsics.type_is_complex(C), Nd>=2 {
-
-	md.validate_initialized(a, location) or_return
-
-
-	if !lapacke.OPENBLAS_SUPPORTED {
-		logging.error(
-			.NotImplemented,
-			"Decomposion operations are only implemented with openblas support.",
-			location,
-		)
-		return
-	}
-
-	when !(F == f32 || F == f64){
-		logging.error(
-			.ArguementError,
-			"openblas routines do not support half precision routines.",
-			location,
-		)
-		return
-	}
-
-	when (F == f32 && C != complex64) || (F == f64 && C != complex128){
-		logging.error(
-			.ArguementError,
-			"the complex type must correspond to the float.",
-			location,
-		)
-		return
-	}
 	
+	validate_eig_operators(C, a, allocator, location) or_return
+
 	n:= a.shape[Nd-1]
-	if n != a.shape[Nd-2] {
-		logging.error(
-			.ArguementError,
-			"the eig values can only be computed for nonsymteric square matrices or stacks of matrices.",
-			location=location,
-		)
-	}
-	
+
 	// Lapack will fill the array since it uses it as a work area.
 	a_ := md.copy_array(a, allocator, location) or_return
 	defer md.free_mdarray(a_)
@@ -657,44 +588,9 @@ _inner_eigvals :: proc(
 	 ok:bool,
 ) where intrinsics.type_is_float(F) || intrinsics.type_is_complex(C), Nd>=2 {
 
-	md.validate_initialized(a, location) or_return
+	validate_eig_operators(C, a, allocator, location) or_return
 
-
-	if !lapacke.OPENBLAS_SUPPORTED {
-		logging.error(
-			.NotImplemented,
-			"Decomposion operations are only implemented with openblas support.",
-			location,
-		)
-		return
-	}
-
-	when !(F == f32 || F == f64){
-		logging.error(
-			.ArguementError,
-			"openblas routines do not support half precision routines.",
-			location,
-		)
-		return
-	}
-
-	when (F == f32 && C != complex64) || (F == f64 && C != complex128){
-		logging.error(
-			.ArguementError,
-			"the complex type must correspond to the float.",
-			location,
-		)
-		return
-	}
-	
 	n:= a.shape[Nd-1]
-	if n != a.shape[Nd-2] {
-		logging.error(
-			.ArguementError,
-			"the eig values can only be computed for nonsymteric square matrices or stacks of matrices.",
-			location=location,
-		)
-	}
 	
 	// Lapack will fill the array since it uses it as a work area.
 	a_ := md.copy_array(a, allocator, location) or_return
@@ -704,7 +600,6 @@ _inner_eigvals :: proc(
 
 	wr := make([]f64, n)
 	wi := make([]f64, n)
-
 
 	defer {
 		delete(wr)

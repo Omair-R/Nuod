@@ -54,6 +54,21 @@ fft_pass_inplace :: proc(
 }
 
 
+/*
+Compute the one-dimensional fast fourier transform for a one-dimensional signal.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a vector representing a complex signal.
+- inverse: a boolean to compute the inverse of the fft.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the signal in the frequency domain.
+- ok: an optional boolean for error handling.
+*/
 fft_vector :: proc(
 	mdarray: md.MdArray($T, 1),
 	inverse:=false,
@@ -82,6 +97,22 @@ fft_vector :: proc(
 }
 
 
+/*
+Compute the one-dimensional fast fourier transform for a multidimensional signal along
+the last axis dimension.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array representing a complex signal.
+- inverse: a boolean to compute the inverse of the fft.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the signal in the frequency domain.
+- ok: an optional boolean for error handling.
+*/
 fft_default :: proc(
 	mdarray: md.MdArray($T, $Nd),
 	inverse:=false,
@@ -96,6 +127,23 @@ fft_default :: proc(
 }
 
 
+/*
+Compute the one-dimensional fast fourier transform for a multidimensional signal along
+a selected axis dimension.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array representing a complex signal.
+- axis: the axis along which the fourier transform is computed.
+- inverse: a boolean to compute the inverse of the fft.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the signal in the frequency domain.
+- ok: an optional boolean for error handling.
+*/
 fft_with_axes :: proc(
 	mdarray: md.MdArray($T, $Nd),
 	axis:int,
@@ -145,6 +193,20 @@ fft :: proc{
 }
 
 
+/*
+Compute the one-dimensional inverse fast fourier transform for a one-dimensional signal.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a vector representing a complex signal.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the signal in the frequency domain.
+- ok: an optional boolean for error handling.
+*/
 ifft_vector :: proc(
 	mdarray: md.MdArray($T, 1),
 	allocator:=context.allocator,
@@ -158,6 +220,21 @@ ifft_vector :: proc(
 }
 
 
+/*
+Compute the one-dimensional inverse fast fourier transform for a complex multidimensional
+signal along the last axis dimension.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array representing a complex signal.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the signal in the time domain.
+- ok: an optional boolean for error handling.
+*/
 ifft_default :: proc(
 	mdarray: md.MdArray($T, $Nd),
 	allocator:=context.allocator,
@@ -171,10 +248,25 @@ ifft_default :: proc(
 }
 
 
+/*
+Compute the one-dimensional inverse fast fourier transform for a complex multidimensional
+signal along a specific axis dimension.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array representing a complex signal.
+- axis: the axis along which the fourier transform is computed.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the signal in the time domain.
+- ok: an optional boolean for error handling.
+*/
 ifft_with_axes :: proc(
 	mdarray: md.MdArray($T, $Nd),
 	axis:int,
-	inverse:=false,
 	allocator:=context.allocator,
 	location:= #caller_location,	
 )-> (
@@ -191,6 +283,22 @@ ifft :: proc{
 }
 
 
+/*
+Compute the two-dimensional fast fourier transform for a multidimensional signal along
+the last two axis dimensions.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array representing a complex signal.
+- inverse: a boolean to compute the inverse of the fft.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the signal in the frequency domain.
+- ok: an optional boolean for error handling.
+*/
 fft2d_default :: proc(
 	mdarray: md.MdArray($T, $Nd),
 	inverse:=false,
@@ -207,6 +315,23 @@ fft2d_default :: proc(
 }
 
 
+/*
+Compute the two-dimensional fast fourier transform for a multidimensional signal along two
+specific axis dimensions.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array representing a complex signal.
+- axes: an a array of two elements representing the axes along which the transform is performed.
+- inverse: a boolean to compute the inverse of the fft.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the signal in the frequency domain.
+- ok: an optional boolean for error handling.
+*/
 fft2d_with_axes :: proc(
 	mdarray: md.MdArray($T, $Nd),
 	axes : [2]int,
@@ -232,6 +357,22 @@ fft2d :: proc{
 }
 
 
+/*
+Compute the multi-dimensional fast fourier transform for a multidimensional signal along
+all its axis dimensions.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array representing a complex signal.
+- inverse: a boolean to compute the inverse of the fft.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the signal in the frequency domain.
+- ok: an optional boolean for error handling.
+*/
 fftnd_default :: proc(
 	mdarray: md.MdArray($T, $Nd),
 	inverse:=false,
@@ -251,6 +392,23 @@ fftnd_default :: proc(
 }
 
 
+/*
+Compute the multi-dimensional fast fourier transform for a multidimensional signal along
+a set of specific axis dimensions.
+
+NOTE: Use of this procedure is discourged. Please use the procedure group instead.
+
+Inputs:
+- mdarray: a multidimensional array representing a complex signal.
+- axes: the axes along which the transform is performed.
+- inverse: a boolean to compute the inverse of the fft.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the signal in the frequency domain.
+- ok: an optional boolean for error handling.
+*/
 fftnd_with_axes :: proc(
 	mdarray: md.MdArray($T, $Nd),
 	axes : [$Md]int,

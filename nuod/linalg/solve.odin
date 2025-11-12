@@ -7,6 +7,7 @@ import md "../mdarray"
 import "../logging"
 import lapacke "../lapacke"
 
+
 /*
 Compute the determinant of a matrix.
 
@@ -28,16 +29,9 @@ det_matrix :: proc(
 	ok:bool,
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) #optional_ok {
 
-	validate_open_blas(a, allocator, location) or_return
+	validate_general_openblas(a, allocator, location) or_return
 
-	n:= a.shape[0]
-	if n != a.shape[1] {
-		logging.error(
-			.ArguementError,
-			"the determinant can only be computed for nonsymteric square matrices or stacks of matrices.",
-			location=location,
-		)
-	}
+	validate_square(a, allocator, location) or_return
 
 	a_ := md.copy_array(a, allocator, location) or_return
 	defer md.free_mdarray(a_)
@@ -68,17 +62,9 @@ det_tensor :: proc(
 	ok:bool,
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 #optional_ok {
 
-	validate_open_blas(a, allocator, location) or_return
+	validate_general_openblas(a, allocator, location) or_return
 
-	n:= a.shape[Nd-1]
-	if n != a.shape[Nd-2] {
-		logging.error(
-			.ArguementError,
-			"the determinant can only be computed for nonsymteric square matrices or stacks of matrices.",
-			location=location,
-		)
-	}
-
+	validate_square(a, allocator, location) or_return
 	
 	a_ := md.copy_array(a, allocator, location) or_return
 	defer md.free_mdarray(a_)
@@ -275,16 +261,9 @@ inv :: proc(
 	 ok:bool,
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 #optional_ok{
 
-	validate_open_blas(a, allocator, location) or_return
+	validate_general_openblas(a, allocator, location) or_return
 
-	n:= a.shape[Nd-1]
-	if n != a.shape[Nd-2] {
-		logging.error(
-			.ArguementError,
-			"the inverse can only be computed for nonsymteric square matrices or stacks of matrices.",
-			location=location,
-		)
-	}
+	validate_square(a, allocator, location) or_return
 
 	a_ := md.copy_array(a, allocator, location) or_return
 	
@@ -395,6 +374,7 @@ pinv :: proc(
 	return pinv_a, true
 }
 
+
 /*
 Compute the solution of system of linear equations in matrix form (Ax = b). 
 A may be a square matrix or a stack of square matrices. b maybe a vector, multiple 
@@ -402,7 +382,7 @@ vectors, a stack of vectors, or a stack of multiple vectors.
 
 Inputs:
 - a: a matrix or stack of matrices.
-- b: a matrix or stack of matrices.
+- b: a vector, multiple vectors, stack of vectors, or stack of multiple vectors.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
 
@@ -421,6 +401,12 @@ solve :: proc(
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T),
 		Nd>=2 && (Nd==Md || Md==Nd-1) #optional_ok{			
 
+	validate_general_openblas(a, allocator, location) or_return
+
+	validate_square(a, allocator, location) or_return
+
+	validate_inner_dimensions(a, b, allocator, location) or_return
+
 	a_ := md.copy_array(a, allocator, location) or_return		
 	defer md.free_mdarray(a_)
 
@@ -434,7 +420,6 @@ solve :: proc(
 
 	return solution, true
 }
-
 
 
 @(private="file")
@@ -490,6 +475,21 @@ lapacke_solve :: proc(
 }
 
 
+/*
+Compute the solution for over and well determined systems of linear equations in matrix form
+(Ax = b). It utilizes the QR/QL factorization to minimize the least square error.
+
+Inputs:
+- a: a matrix.
+- b: a vector or a matrix.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- solution: the solution for the system of linear equations.
+- residual: the residual values, computed only for over-determined systems.
+- ok: an optional boolean for error handling.
+*/
 lstsq :: proc(
 	a: md.MdArray($T, 2),
 	b: md.MdArray(T, $Md),
@@ -501,7 +501,8 @@ lstsq :: proc(
 	 ok:bool,
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), (Md==2 || Md==1) {			
 
-	validate_open_blas(a, allocator, location) or_return
+	validate_general_openblas(a, allocator, location) or_return
+
 	md.validate_initialized(b, location) or_return
 	
 	m:= a.shape[0]
