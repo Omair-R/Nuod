@@ -10,7 +10,7 @@ package cblas
 import "core:c"
 
 when ODIN_OS == .Windows {
-	foreign import openblas "../../../vendors/openblas/lib/libopenblas.lib"
+	foreign import openblas "../vendors/openblas/lib/libopenblas.lib"
 } else when ODIN_OS == .Linux {
 	foreign import openblas "system:openblas"
 } else when ODIN_OS == .Darwin {
