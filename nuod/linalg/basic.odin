@@ -74,7 +74,21 @@ make_diagonal_vector :: proc(
 }
 
 
-make_diagonal_multidimensional :: proc(	
+/*
+Produce a diagonal matrix whose diagonal elements are populated based 
+on the provided stacks of vectors.
+
+Inputs:
+- Nd: number of dimensions of mdarray.
+- mdarray: a stack of one-dimenaional arrays.
+- allocator: the allocator used internally.
+- location: a debugging variable used to trace the location of the calling procedure.
+
+Returns:
+- result: the resultant diagonal stack of matrice.
+- ok: an optional boolean for error handling.
+*/
+make_diagonal_stack :: proc(	
 	$Nd: int, 
 	mdarray: md.MdArray($T, Nd),
 	allocator := context.allocator,
@@ -110,7 +124,7 @@ make_diagonal_multidimensional :: proc(
 
 make_diagonal :: proc{
 	make_diagonal_vector,
-	make_diagonal_multidimensional
+	make_diagonal_stack
 }
 
 

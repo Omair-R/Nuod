@@ -434,23 +434,47 @@ test_lapack_det :: proc (t : ^testing.T){
 	{
 		n:= 2
 
-		arr := md.from_slice([]f64{4, 6, 3, 8}, [2]int{n, n})
+		arr := md.from_slice([]complex128{
+			complex(-2, 0),
+			complex(-9, 0),
+			complex(1, 0),
+			complex(4, 0)
+		}, [2]int{n, n})
 
 		det, ok := nl.det(arr)
 
-		testing.expect_value(t, det, 14)
+		testing.expect_value(t, det, complex(1, 0))
 		md.free_mdarray(arr)
 	}
 
 	{
 		n:= 2
 
-		arr := md.from_slice([]f64{3, 8, 4, 6}, [2]int{n, n})
+		arr := md.from_slice([]complex64{
+			complex(-2, 0),
+			complex(9, 0),
+			complex(1, 0),
+			complex(-4, 0)
+		}, [2]int{n, n})
 
 		det, ok := nl.det(arr)
 
-		testing.expect_value(t, det, -14)
+		testing.expect_value(t, det, complex(-1, 0))
 		md.free_mdarray(arr)
+	}
+
+	{
+		n:= 2
+
+		arr := md.from_slice([]f64{4, 6, 3, 8, 3, 8, 4, 6}, [3]int{2, n, n})
+
+		det, ok := nl.det(3, arr)
+		det_, ok2 := md.from_slice([]f64{14, -14}, [1]int{2})
+
+		testing.expect(t, md.all_close(det, det_))
+		md.free_mdarray(arr)
+		md.free_mdarray(det)
+		md.free_mdarray(det_)
 	}
 
 	{
@@ -510,6 +534,54 @@ test_lapack_inv :: proc (t : ^testing.T){
 
 		id := nl.matmul(inv, arr)
 		id_ := md.identity(f64, 3)
+
+		close := md.all_close(id, id_)
+		testing.expect(t, close )
+
+		md.free_mdarray(arr)
+		md.free_mdarray(inv)
+		md.free_mdarray(id)
+		md.free_mdarray(id_)
+	}
+
+	{
+		n:= 2
+
+		arr := md.from_slice([]complex64{
+			complex(-2, 0),
+			complex(9, 0),
+			complex(1, 0),
+			complex(-4, 0)
+		}, [2]int{n, n})
+
+		inv := nl.inv(arr)
+
+		id := nl.matmul(inv, arr)
+		id_ := md.identity(complex64, 2)
+
+		close := md.all_close(id, id_)
+		testing.expect(t, close )
+
+		md.free_mdarray(arr)
+		md.free_mdarray(inv)
+		md.free_mdarray(id)
+		md.free_mdarray(id_)
+	}
+
+	{
+		n:= 2
+
+		arr := md.from_slice([]complex128{
+			complex(3, 0),
+			complex(9, 0),
+			complex(-8, 0),
+			complex(-4, 0)
+		}, [2]int{n, n})
+
+		inv := nl.inv(arr)
+
+		id := nl.matmul(inv, arr)
+		id_ := md.identity(complex128, 2)
 
 		close := md.all_close(id, id_)
 		testing.expect(t, close )
@@ -590,6 +662,31 @@ test_lapack_pinv :: proc (t : ^testing.T){
 		md.free_mdarray(id)
 		md.free_mdarray(id_)
 	}
+
+	{
+		n:= 2
+
+		arr := md.from_slice([]complex64{
+			complex(-2, 0),
+			complex(9, 0),
+			complex(1, 0),
+			complex(-4, 0)
+		}, [2]int{n, n})
+
+		inv := nl.pinv(arr)
+
+		id := nl.matmul(inv, arr)
+		id_ := md.identity(complex64, 2)
+
+		close := md.all_close(id, id_)
+		testing.expect(t, close )
+
+		md.free_mdarray(arr)
+		md.free_mdarray(inv)
+		md.free_mdarray(id)
+		md.free_mdarray(id_)
+	}
+
 	{
 		s:= 3
 		n:: 2
@@ -645,6 +742,30 @@ test_lapack_solve :: proc (t : ^testing.T){
 	}
 
 	{
+		n:= 3
+
+		a := md.from_slice([]f64{3, 2, 4, 2, 0, 2, 4, 2, 3}, [2]int{n, n})
+		a_ := md.cast_array(a, complex64)
+		b := md.from_slice([]f64{1, 3, 2}, [1]int{n})
+		b_ := md.cast_array(b, complex64)
+
+		sol := nl.solve(a_, b_)
+		sol_ := md.from_slice([]f64{1.25, -1.875, 0.25}, [1]int{n})
+		sol_c := md.cast_array(sol_, complex64)
+
+		close := md.all_close(sol, sol_c)
+		testing.expect(t, close)
+	
+		md.free_mdarray(a)
+		md.free_mdarray(b)
+		md.free_mdarray(a_)
+		md.free_mdarray(b_)
+		md.free_mdarray(sol)
+		md.free_mdarray(sol_)
+		md.free_mdarray(sol_c)
+	}
+
+	{
 		s:=2
 		n:= 3
 
@@ -686,6 +807,30 @@ test_lapack_lstsq :: proc (t : ^testing.T){
 		md.free_mdarray(b)
 		md.free_mdarray(sol)
 		md.free_mdarray(sol_)
+	}
+
+	{
+		n:= 3
+
+		a := md.from_slice([]f64{3, 2, 4, 2, 0, 2, 4, 2, 3}, [2]int{n, n})
+		a_ := md.cast_array(a, complex128)
+		b := md.from_slice([]f64{1, 3, 2}, [1]int{n})
+		b_ := md.cast_array(b, complex128)
+
+		sol, res, ok := nl.lstsq(a_, b_)
+		sol_ := md.from_slice([]f64{1.25, -1.875, 0.25}, [1]int{n})
+		sol_c := md.cast_array(sol_, complex128)
+
+		close := md.all_close(sol, sol_c)
+		testing.expect(t, close)
+	
+		md.free_mdarray(a)
+		md.free_mdarray(b)
+		md.free_mdarray(a_)
+		md.free_mdarray(b_)
+		md.free_mdarray(sol)
+		md.free_mdarray(sol_)
+		md.free_mdarray(sol_c)
 	}
 
 	{

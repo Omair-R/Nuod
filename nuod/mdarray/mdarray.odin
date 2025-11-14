@@ -328,7 +328,7 @@ zeros :: proc(
 	ok: bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
 	when intrinsics.type_is_complex(T){
-		return fills(complex(0, 0), shape, allocator, location = location)
+		return fills(T(complex(0, 0)), shape, allocator, location = location)
 	} else {
 		return fills(cast(T)0, shape, allocator, location = location)
 	}
@@ -360,7 +360,7 @@ zeros_like :: proc(
 	ok: bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
 	when intrinsics.type_is_complex(T){
-		return fills(complex(0, 0), source.shape, allocator, location = location)
+		return fills(T(complex(0, 0)), source.shape, allocator, location = location)
 	} else {
 		return fills(cast(T)0, source.shape, allocator, location = location)
 	}
@@ -390,7 +390,7 @@ ones :: proc(
 	ok: bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
 	when intrinsics.type_is_complex(T){
-		return fills(complex(1, 0), shape, allocator, location = location)
+		return fills(T(complex(1, 0)), shape, allocator, location = location)
 	} else {
 		return fills(cast(T)1, shape, allocator, location = location)
 	}
@@ -422,7 +422,7 @@ ones_like :: proc(
 	ok: bool,
 ) where intrinsics.type_is_numeric(T) #optional_ok {
 	when intrinsics.type_is_complex(T){
-		return fills(complex(1, 0), source.shape, allocator, location = location)
+		return fills(T(complex(1, 0)), source.shape, allocator, location = location)
 	} else {
 		return fills(cast(T)1, source.shape, allocator, location = location)
 	}

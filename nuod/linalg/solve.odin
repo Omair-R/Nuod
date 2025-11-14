@@ -229,9 +229,11 @@ lapacke_det :: proc(
 			location
 		) or_return
 
+		// Lapack seems to return 32 bit integers despite documenting otherwise
+		ipiv_t := transmute([]i32)ipiv
 		for j in 0..<n{
 			de.buffer[i] *= a_s[j*n+j]
-			if ipiv[j] != lapacke.blasint(j) do de.buffer[i] *= -1
+			if ipiv_t[j] != i32(j+1) do de.buffer[i] *= -1
 		}
 	}
 

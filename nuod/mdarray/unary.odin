@@ -119,7 +119,7 @@ inner_log1p :: #force_inline proc($T: typeid)-> (proc(^T)) where intrinsics.type
 	return #force_inline proc(val: ^T) { val^ = math.log1p(val^) }
 }
 @(private="file")
-inner_reciprocal :: #force_inline proc($T: typeid)-> (proc(^T)) where intrinsics.type_is_float(T) {
+inner_reciprocal :: #force_inline proc($T: typeid)-> (proc(^T)) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
 	return #force_inline proc(val: ^T)  { val^ = 1/val^ }
 }
 
