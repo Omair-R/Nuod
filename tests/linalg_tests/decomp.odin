@@ -62,12 +62,68 @@ test_lapack_qr :: proc (t : ^testing.T){
 		md.free_mdarray(rrr)
 		md.free_mdarray(qrr)
 	}
+
+	{
+		arr := md.reshaped_range(complex64, [2]int{m, n}, 1)
+	
+		qrr, rrr, ok := nl.qr(arr)
+	
+		arr_ := nl.matmul(qrr, rrr)
+
+		testing.expect(t, md.all_close(arr, arr_))
+
+		md.free_mdarray(arr)
+		md.free_mdarray(arr_)
+		md.free_mdarray(rrr)
+		md.free_mdarray(qrr)
+	
+	}
+	{
+		arr := md.reshaped_range(complex128, [3]int{3, m, n}, 1)
+
+		qrr, rrr, ok := nl.qr(arr)
+
+		arr_ := nl.matmul(qrr, rrr)
+
+		testing.expect(t, md.all_close(arr, arr_))
+
+		md.free_mdarray(arr)
+		md.free_mdarray(arr_)
+		md.free_mdarray(rrr)
+		md.free_mdarray(qrr)
+	}
 }
 
 
-// TODO: test for higher dimensions
 @test
 test_lapack_svd :: proc (t : ^testing.T){
+
+	{
+		m:=4
+		n:=3
+
+		arr := nr.normal_sample(f32(0), f32(1), [2]int{m, n})
+		s, u, vt, ok := nl.reduced_svd(2, arr)
+
+		s_ := nl.svd_vals(2, arr)
+		defer md.free_mdarray(s_)
+		testing.expect(t, md.all_close(s, s_))
+		
+		s_diag := nl.make_diagonal(s)
+		u_s := nl.matmul(u, s_diag)
+		arr_ := nl.matmul(u_s, vt)
+
+		testing.expect(t, md.all_close(arr, arr_))
+
+		md.free_mdarray(arr)
+		md.free_mdarray(s)
+		md.free_mdarray(s_diag)
+		md.free_mdarray(u)
+		md.free_mdarray(vt)
+	
+		md.free_mdarray(u_s)
+		md.free_mdarray(arr_)
+	}
 
 	{
 		m:=4
@@ -77,8 +133,115 @@ test_lapack_svd :: proc (t : ^testing.T){
 	
 		s, u, vt, ok := nl.reduced_svd(2, arr)
 	
+		s_ := nl.svd_vals(2, arr)
+		defer md.free_mdarray(s_)
+		testing.expect(t, md.all_close(s, s_))
 		
 		s_diag := nl.make_diagonal(s)
+		u_s := nl.matmul(u, s_diag)
+		arr_ := nl.matmul(u_s, vt)
+
+		testing.expect(t, md.all_close(arr, arr_))
+
+		md.free_mdarray(arr)
+		md.free_mdarray(s)
+		md.free_mdarray(s_diag)
+		md.free_mdarray(u)
+		md.free_mdarray(vt)
+	
+		md.free_mdarray(u_s)
+		md.free_mdarray(arr_)
+	}
+
+	{
+		m:=4
+		n:=3
+
+		arr := md.reshaped_range(complex64, [2]int{m, n}, 1)
+	
+		s, u, vt, ok := nl.reduced_svd(2, arr)
+	
+		s_ := nl.svd_vals(2, arr)
+		defer md.free_mdarray(s_)
+		testing.expect(t, md.all_close(s, s_))
+		
+		s_diag := nl.make_diagonal(s)
+		u_s := nl.matmul(u, s_diag)
+		arr_ := nl.matmul(u_s, vt)
+
+		testing.expect(t, md.all_close(arr, arr_))
+
+		md.free_mdarray(arr)
+		md.free_mdarray(s)
+		md.free_mdarray(s_diag)
+		md.free_mdarray(u)
+		md.free_mdarray(vt)
+	
+		md.free_mdarray(u_s)
+		md.free_mdarray(arr_)
+	}
+
+	{
+		m:=4
+		n:=3
+
+		arr := md.reshaped_range(complex128, [2]int{m, n}, 1)
+	
+		s, u, vt, ok := nl.reduced_svd(2, arr)
+	
+		s_ := nl.svd_vals(2, arr)
+		defer md.free_mdarray(s_)
+		testing.expect(t, md.all_close(s, s_))
+		
+		s_diag := nl.make_diagonal(s)
+		u_s := nl.matmul(u, s_diag)
+		arr_ := nl.matmul(u_s, vt)
+
+		testing.expect(t, md.all_close(arr, arr_))
+
+		md.free_mdarray(arr)
+		md.free_mdarray(s)
+		md.free_mdarray(s_diag)
+		md.free_mdarray(u)
+		md.free_mdarray(vt)
+	
+		md.free_mdarray(u_s)
+		md.free_mdarray(arr_)
+	}
+
+	{
+		m:=4
+		n:=3
+
+		arr := nr.normal_sample(f64(0), f64(1), [3]int{2, m, n})
+	
+		s, u, vt, ok := nl.reduced_svd(3, arr)
+		
+		s_diag := nl.make_diagonal(2, s)
+		u_s := nl.matmul(u, s_diag)
+		arr_ := nl.matmul(u_s, vt)
+
+		testing.expect(t, md.all_close(arr, arr_))
+
+		md.free_mdarray(arr)
+		md.free_mdarray(s)
+		md.free_mdarray(s_diag)
+		md.free_mdarray(u)
+		md.free_mdarray(vt)
+	
+		md.free_mdarray(u_s)
+		md.free_mdarray(arr_)
+	}
+
+	{
+		m:=4
+		n:=3
+
+		arr := nr.normal_sample(f64(0), f64(1), [4]int{2, 2, m, n})
+	
+		s, u, vt, ok := nl.reduced_svd(4, arr)
+		
+		s_diag := nl.make_diagonal(3, s)
 		u_s := nl.matmul(u, s_diag)
 		arr_ := nl.matmul(u_s, vt)
 
@@ -120,7 +283,6 @@ test_lapack_svd :: proc (t : ^testing.T){
 }
 
 
-// TODO: Test that decomposition is equal and test higher dimensions
 @test
 test_lapack_eig :: proc (t : ^testing.T){
 
@@ -131,8 +293,40 @@ test_lapack_eig :: proc (t : ^testing.T){
 
 		e_vals, e_vecs, ok := nl.eig(2, arr)
 
+		testing.expect(t, ok)
 		testing.expect_value(t, e_vals.shape, [1]int{n})
 		testing.expect_value(t, e_vecs.shape, [2]int{n, n})
+
+		
+		ev_diag := nl.make_diagonal(e_vals)
+		evc_inv := nl.inv(e_vecs)
+		intr := nl.matmul(e_vecs, ev_diag)
+		arr_ := nl.matmul(intr, evc_inv)
+		arr_c := md.cast_array(arr, complex128)
+		testing.expect(t, md.all_close(arr_c, arr_))
+		
+		md.free_mdarray(arr)
+		md.free_mdarray(e_vals)
+		md.free_mdarray(e_vecs)
+
+		md.free_mdarray(ev_diag)
+		md.free_mdarray(evc_inv)
+		md.free_mdarray(intr)
+		md.free_mdarray(arr_)
+		md.free_mdarray(arr_c)
+	}
+
+	
+	{
+		n:= 2
+
+		arr := md.reshaped_range(f64, [3]int{2, n, n}, 1)
+
+		e_vals, e_vecs, ok := nl.eig(3, arr)
+
+		testing.expect(t, ok)
+		testing.expect_value(t, e_vals.shape, [2]int{2, n})
+		testing.expect_value(t, e_vecs.shape, [3]int{2, n, n})
 		
 		md.free_mdarray(arr)
 		md.free_mdarray(e_vals)
@@ -141,8 +335,6 @@ test_lapack_eig :: proc (t : ^testing.T){
 	
 }
 
-
-// TODO: Test that decomposition is equal and test higher dimensions
 @test
 test_lapack_eigvals :: proc (t : ^testing.T){
 
@@ -153,10 +345,37 @@ test_lapack_eigvals :: proc (t : ^testing.T){
 
 		e_vals, ok := nl.eigvals(2, arr)
 
+		testing.expect(t, ok)
+
+		e_vals2, e_vecs, ok2 := nl.eig(2, arr)
+
+		testing.expect(t, ok2)
 		testing.expect_value(t, e_vals.shape, [1]int{n})
 		
 		md.free_mdarray(arr)
 		md.free_mdarray(e_vals)
+		md.free_mdarray(e_vals2)
+		md.free_mdarray(e_vecs)
+	}
+
+	{
+		n:= 2
+
+		arr := md.reshaped_range(f64, [3]int{2, n, n}, 1)
+
+		e_vals, ok := nl.eigvals(3, arr)
+
+		testing.expect(t, ok)
+
+		e_vals2, e_vecs, ok2 := nl.eig(3, arr)
+
+		testing.expect(t, ok2)
+		testing.expect_value(t, e_vals.shape, [2]int{2, n})
+		
+		md.free_mdarray(arr)
+		md.free_mdarray(e_vals)
+		md.free_mdarray(e_vals2)
+		md.free_mdarray(e_vecs)
 	}
 	
 }

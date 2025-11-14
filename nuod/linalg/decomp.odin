@@ -212,6 +212,10 @@ svd_vals :: proc(
 
 	validate_general_openblas(a, allocator, location) or_return
 
+	when T == complex128 do F :: f64
+	else when T == complex64 do F :: f32
+	else do F :: T
+
 	// Lapack will fill the array since it uses it as a work area.
 	a_ := md.copy_array(a, allocator, location) or_return
 	defer md.free_mdarray(a_)
@@ -227,10 +231,10 @@ svd_vals :: proc(
 	s_shape[Nd-2] = k
 
 	when Nd == 2 {
-		s = md.make_mdarray(T, s_shape, allocator, location) or_return
+		s_f := md.make_mdarray(F, s_shape, allocator, location) or_return
 		lapack_svd_wrapper(
-			a.buffer, m_b, n_b,
-			s.buffer, []T{},
+			a_.buffer, m_b, n_b,
+			s_f.buffer, []T{},
 			[]T{}, .Skip_UV
 		) or_return
 	} else { 
@@ -238,8 +242,7 @@ svd_vals :: proc(
 			s_shape[d] = a.shape[d]
 		}
 
-		s = md.make_mdarray(T, s_shape, allocator, location) or_return
-
+		s_f := md.make_mdarray(F, s_shape, allocator, location) or_return
 		a_sig:= m*n
 		s_sig:= k
 
@@ -247,8 +250,8 @@ svd_vals :: proc(
 		s_s: []T
 
 		for i in 0..<(md.size(a)/(a_sig)){
-			a_s = a.buffer[i*a_sig: i*a_sig+a_sig]
-			s_s = s.buffer[i*s_sig: i*s_sig+s_sig]
+			a_s = a_.buffer[i*a_sig: i*a_sig+a_sig]
+			s_s = s_f.buffer[i*s_sig: i*s_sig+s_sig]
 
 			lapack_svd_wrapper(
 				a_s, m_b, n_b,
@@ -257,6 +260,8 @@ svd_vals :: proc(
 			) or_return
 		}
 	}
+	s = md.cast_array(s_f, T, allocator, location) or_return
+	md.free_mdarray(s_f)
 	return s, true 	
 }
 
@@ -275,6 +280,10 @@ _inner_svd :: proc(
 	 ok:bool,
 ) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T), Nd>=2 {
 
+	when T == complex128 do F :: f64
+	else when T == complex64 do F :: f32
+	else do F :: T
+	
 	m:= a.shape[Nd-2]
 	n:= a.shape[Nd-1]
 	k:= min(m, n)
@@ -304,29 +313,42 @@ _inner_svd :: proc(
 	}
 
 	when Nd == 2 {
-		s = md.make_mdarray(T, s_shape, allocator, location) or_return
+		s_f := md.make_mdarray(F, s_shape, allocator, location) or_return
 		u = md.make_mdarray(T, u_shape, allocator, location) or_return
 		vt = md.make_mdarray(T, v_shape, allocator, location) or_return
+
 		lapack_svd_wrapper(
 			a.buffer, m_b, n_b,
-			s.buffer, u.buffer,
+			s_f.buffer, u.buffer,
 			vt.buffer, mode, location
 		) or_return
+
+		s = md.cast_array(s_f, T, allocator, location) or_return
+		md.free_mdarray(s_f)
+
 	} else { 
 		for d in 0..<Nd-2{
 			s_shape[d] = a.shape[d]
 			u_shape[d] = a.shape[d]
-			vt_shape[d] = a.shape[d]
+			v_shape[d] = a.shape[d]
 		}
 
-		s = md.make_mdarray(T, s_shape, allocator, location) or_return
+		s_f := md.make_mdarray(F, s_shape, allocator, location) or_return
 		u = md.make_mdarray(T, u_shape, allocator, location) or_return
-		vt = md.make_mdarray(T, vt_shape, allocator, location) or_return
+		vt = md.make_mdarray(T, v_shape, allocator, location) or_return
 
 		a_sig:= m*n
 		s_sig:= k
-		u_sig:= m*m
-		v_sig:= n*n
+		u_sig : int
+		v_sig : int
+		#partial switch mode {
+			case .Full:
+				u_sig= m*m
+				v_sig= n*n
+			case .Reduced:
+				u_sig= m*k
+				v_sig= n*k
+		}
 
 		a_s: []T
 		s_s: []T
@@ -335,7 +357,7 @@ _inner_svd :: proc(
 
 		for i in 0..<(md.size(a)/(a_sig)){
 			a_s = a.buffer[i*a_sig: i*a_sig+a_sig]
-			s_s = s.buffer[i*s_sig: i*s_sig+s_sig]
+			s_s = s_f.buffer[i*s_sig: i*s_sig+s_sig]
 			u_s = u.buffer[i*u_sig: i*u_sig+u_sig]
 			v_s = vt.buffer[i*v_sig: i*v_sig+v_sig]
 
@@ -345,6 +367,9 @@ _inner_svd :: proc(
 				v_s, mode
 			) or_return
 		}
+
+		s = md.cast_array(s_f, T, allocator, location) or_return
+		md.free_mdarray(s_f)
 	}
 
 	return s, u, vt, true	
@@ -493,16 +518,16 @@ _inner_eig :: proc(
 			e_vecs_shape[d] = a_.shape[d]
 		}
 
-		eig_vals = md.make_mdarray(T, e_vals_shape, allocator, location) or_return
-		eig_vecs = md.make_mdarray(T, e_vecs_shape, allocator, location) or_return
+		eig_vals = md.make_mdarray(C, e_vals_shape, allocator, location) or_return
+		eig_vecs = md.make_mdarray(C, e_vecs_shape, allocator, location) or_return
 
 		a_sig:= n*n
 		e_vals_sig:= n
 		e_vecs_sig:= n*n
 
-		a_s: []T
-		e_vals_s: []T
-		e_vecs_s: []T
+		a_s: []F
+		e_vals_s: []C
+		e_vecs_s: []C
 
 		for i in 0..<(md.size(a)/(a_sig)){
 			a_s = a_.buffer[i*a_sig: i*a_sig+a_sig]
@@ -518,7 +543,7 @@ _inner_eig :: proc(
 		}
 	}
 
-	return 
+	return eig_vals, eig_vecs, true
 }
 
 /*
@@ -625,13 +650,13 @@ _inner_eigvals :: proc(
 			e_vals_shape[d] = a_.shape[d]
 		}
 
-		eig_vals = md.make_mdarray(T, e_vals_shape, allocator, location) or_return
+		eig_vals = md.make_mdarray(C, e_vals_shape, allocator, location) or_return
 
 		a_sig:= n*n
 		e_vals_sig:= n
 
-		a_s: []T
-		e_vals_s: []T
+		a_s: []F
+		e_vals_s: []C
 
 		for i in 0..<(md.size(a)/(a_sig)){
 			a_s = a_.buffer[i*a_sig: i*a_sig+a_sig]
@@ -643,12 +668,12 @@ _inner_eigvals :: proc(
 				false, location
 			) or_return
 			for i in 0..<n{
-				e_vecs_s[i] = complex(wr[i], wi[i])
+				e_vals_s[i] = complex(wr[i], wi[i])
 			}
 		}
 	}
 
-	return 
+	return eig_vals, true
 }
 
 

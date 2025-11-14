@@ -53,7 +53,7 @@ Returns:
 - result: the resultant diagonal matrix.
 - ok: an optional boolean for error handling.
 */
-make_diagonal :: proc(	
+make_diagonal_vector :: proc(	
 	mdarray: md.MdArray($T, 1),
 	allocator := context.allocator,
 	location := #caller_location,
@@ -71,6 +71,46 @@ make_diagonal :: proc(
 		result.buffer[i*n+i] = md.get_linear(mdarray, i, location=location)
 	}
 	return result, true
+}
+
+
+make_diagonal_multidimensional :: proc(	
+	$Nd: int, 
+	mdarray: md.MdArray($T, Nd),
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	result: md.MdArray(T, Nd+1),
+	ok:bool
+) where intrinsics.type_is_numeric(T) || intrinsics.type_is_boolean(T) #optional_ok {
+
+	md.validate_initialized(mdarray, location=location) or_return
+
+	n:= mdarray.shape[Nd-1]
+
+	s_shape : [Nd+1]int
+	s_shape[Nd] = n
+	s_shape[Nd-1] = n
+	for d in 0..<Nd-1{
+		s_shape[d] = mdarray.shape[d]
+	}
+
+	result = md.make_mdarray(T, s_shape, allocator=allocator, location=location)
+
+	nn := n*n
+	for j in 0..<(md.size(mdarray)/n){
+		jnn := j*nn
+		for i in 0..<n{
+			result.buffer[i*n+jnn+i] = md.get_linear(mdarray, i+j*n, location=location)
+		}
+	}
+	return result, true
+}
+
+
+make_diagonal :: proc{
+	make_diagonal_vector,
+	make_diagonal_multidimensional
 }
 
 

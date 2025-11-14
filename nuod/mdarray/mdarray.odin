@@ -433,13 +433,24 @@ ones_like :: proc(
 @(private="file")
 inner_range :: proc(
 	buffer: []$T,
-	begin, step: T,
+	begin, step: $S,
 	size:int,
 ) {
-	curr_val := begin
+	begin_ : T
+	step_ : T
+
+	when intrinsics.type_is_complex(T) {
+		begin_ = complex(f64(begin), 0)
+		step_ = complex(f64(step), 0)
+	} else {
+		begin_ = T(begin)
+		step_ = T(step)
+	}
+
+	curr_val := begin_
 	for i in 0..< size {
 		buffer[i] = curr_val
-		curr_val+=step
+		curr_val+=step_
 	}
 }
 
@@ -485,17 +496,7 @@ from_range :: proc(
 	
 	mdarray = make_mdarray(T, [1]int{md_size}, allocator, location) or_return
 
-	begin_ : T
-	step_ : T
-
-	when intrinsics.type_is_complex(T) {
-		begin_ = complex(begin, 0)
-		step_ = complex(step, 0)
-	} else {
-		begin_ = T(begin)
-		step_ = T(step)
-	}
-	inner_range(mdarray.buffer, begin_, step_, size(mdarray))
+	inner_range(mdarray.buffer, begin, step, size(mdarray))
 	return mdarray, true
 }
 
@@ -534,7 +535,7 @@ reshaped_range :: proc(
 
 	mdarray = make_mdarray(T, shape, allocator, location) or_return
 
-	inner_range(mdarray.buffer, T(begin), T(step), size(mdarray))
+	inner_range(mdarray.buffer, begin, step, size(mdarray))
 	return mdarray, true
 }
 
@@ -579,16 +580,7 @@ linspace :: proc(
 	
 	mdarray = make_mdarray(T, [1]int{n}, allocator, location) or_return
 
-	begin_ : T
-	step_ : T
-	when intrinsics.type_is_complex(T) {
-		begin_ = complex(begin, 0)
-		step_ = complex(step, 0)
-	} else {
-		begin_ = T(begin)
-		step_ = T(step)
-	}
-	inner_range(mdarray.buffer, begin_, step_, size(mdarray))
+	inner_range(mdarray.buffer, begin, step, size(mdarray))
 	return mdarray, true
 }
 

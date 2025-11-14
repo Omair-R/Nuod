@@ -168,14 +168,15 @@ lapack_qr_wrapper :: proc(
 lapack_svd_wrapper :: proc(
 	a: []$T,
 	m, n: lapacke.blasint,
-	s : []T,
+	s : []$F,
 	u : []T,
 	vt : []T,
 	mode: SVD_Mode,
 	location:= #caller_location,
 )->(
 	ok: bool
-) where intrinsics.type_is_float(T) || intrinsics.type_is_complex(T) {
+) where (intrinsics.type_is_float(T) || intrinsics.type_is_complex(T)) &&
+		intrinsics.type_is_float(F) {
 
 	k := int(min(m, n))
 
