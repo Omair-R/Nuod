@@ -1,8 +1,14 @@
 package mdarray
 
+import "core:thread"
 import "base:intrinsics"
 import "core:math"
+import "core:mem"
+import "base:runtime"
+import "../logging"
 
+ N_THREADS :: #config(N_THREADS, 4)
+ THREAD_THR :: #config(THREAD_THR, 1_000_000)
 
 /*
 Perform a custom element-wise binary operation on two different arrays.
@@ -14,6 +20,7 @@ Inputs:
 - args: arguments to be passed to the passed procedure.
 - allocator: the allocator used internally.
 - location: a debugging variable used to trace the location of the calling procedure.
+- force_threaded(experimental): force this procedure to use threading, it will be ignored if the size of the arrays is smaller than the number of configured threads.
 
 Returns:
 - result: the resultant array.
@@ -26,6 +33,7 @@ element_wise_map :: proc(
 	args: ..S,
 	allocator := context.allocator,
 	location := #caller_location,
+	force_threaded := false,
 ) -> (
 	result: MdArray(R, Nd),
 	ok: bool,
@@ -38,10 +46,94 @@ element_wise_map :: proc(
 	validate_shape_match(a, b, location=location) or_return
 	result = make_mdarray(R, a.shape, allocator, location) or_return
 
-	for i in 0 ..< size(a) {
+	if size(a) >= THREAD_THR || (force_threaded && size(a) > N_THREADS) {
+		_inner_element_wise_threaded(
+			a, b, result,
+			f, ..args,
+			allocator=allocator, location=location
+		)
+	}
+	else do for i in 0 ..< size(a) {
 		result.buffer[i] = f(get_linear(a, i), get_linear(b, i), ..args)
 	}
 	return result, true
+}
+
+
+@private
+_inner_element_wise_threaded :: proc(
+	a: MdArray($T, $Nd),
+	b: MdArray(T, Nd),
+	r: MdArray($R, Nd),
+	f: proc(_: T, _: T, _: ..$S) -> R,
+	args: ..S,
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	ok: bool,
+) where intrinsics.type_is_numeric(T) ||
+	intrinsics.type_is_boolean(T) {
+
+	Task_Data :: struct {
+		a : ^MdArray(T, Nd),
+		b : ^MdArray(T, Nd),
+		r : ^MdArray(R, Nd),
+		begin : int,
+		end :int,
+		f: proc(T, T, ..S) -> R,
+		args: []S
+	}
+	task_proc :: proc(t: thread.Task){
+		d:= (^Task_Data)(t.data)
+
+		for i in d.begin..<d.end{
+			d.r.buffer[i] = d.f(get_linear(d.a^, i), get_linear(d.b^, i), ..d.args)
+		}
+	}
+
+	pool : thread.Pool
+
+	thread.pool_init(&pool, allocator, N_THREADS)
+	thread.pool_start(&pool)
+
+	defer thread.pool_destroy(&pool)
+
+	N_TASKS :: N_THREADS
+	task_data_a : [N_TASKS]Task_Data
+
+	a:=a
+	b:=b
+	r:=r
+
+	n := size(r)/(N_TASKS)
+	for t_i in 0..<(N_TASKS){
+		task_allocator : mem.Allocator
+		task_allocator = runtime.nil_allocator()
+
+		task_data := &task_data_a[t_i]
+
+		begin := t_i*n
+		end := (t_i+1)*n
+
+		if t_i == N_TASKS-1{
+			m := size(r)%(N_TASKS)
+			end += m
+		}
+
+		task_data.a = &a
+		task_data.b = &b
+		task_data.r = &r
+		task_data.begin = begin
+		task_data.end = end
+		task_data.f = f
+		task_data.args = args
+
+		thread.pool_add_task(&pool, task_allocator, task_proc, task_data, t_i)
+	}
+
+	thread.pool_finish(&pool)
+	
+	return true
 }
 
 
