@@ -4,7 +4,7 @@ import "core:log"
 import "core:testing"
 
 @require import md "../../nuod/mdarray"
-
+@require import rn "../../nuod/random"
 
 
 @private
@@ -115,4 +115,46 @@ test_outplace_unary :: proc(t: ^testing.T){
 			testing.expect_value(t, sqrt_arr.buffer[i], expect_arr[i])
 		}
 	}
+}
+
+
+@(test)
+test_unary_threaded :: proc(t: ^testing.T){
+
+	arr := rn.random_float(f32, [2]int{2, 100})
+	defer md.free_mdarray(arr)
+
+
+	{ 
+		u_arr, ok := md.outplace_unary_map(arr, make_sq_f(f32), force_threaded=true) 
+		testing.expect(t, ok)
+		defer md.free_mdarray(u_arr)
+
+		u_arr_, ok2 := md.outplace_unary_map(arr, make_sq_f(f32)) 
+		testing.expect(t, ok2)
+		defer md.free_mdarray(u_arr_)
+
+		testing.expect(t, md.all_close(u_arr, u_arr_))
+	}
+
+	{ 
+		u_arr, ok_ := md.outplace_unary_map(arr, make_sq_f(f32), force_threaded=true) 
+		testing.expect(t, ok_)
+		defer md.free_mdarray(u_arr)
+
+		arr_ := md.copy_array(arr)
+		defer md.free_mdarray(arr_)
+		
+		ok := md.inplace_unary_map(arr, make_sq_f(f32), force_threaded=true) 
+		testing.expect(t, ok)
+
+		ok = md.inplace_unary_map(arr_, make_sq_f(f32)) 
+		testing.expect(t, ok)
+
+
+		testing.expect(t, md.all_close(arr, arr_))
+		testing.expect(t, md.all_close(arr, u_arr))
+	}
+
+
 }

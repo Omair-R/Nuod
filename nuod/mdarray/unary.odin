@@ -2,10 +2,11 @@ package mdarray
 
 import "base:intrinsics"
 import "core:math"
+import "core:mem"
+import "base:runtime"
+import "core:thread"
 
 import "../logging"
-
-
 /*
 Apply a custom unary operator to all elements in the array out of place.
 
@@ -24,6 +25,7 @@ outplace_unary_map :: proc(
 	f: proc(^T),
 	allocator:= context.allocator,
 	location := #caller_location,
+	force_threaded := false,
 ) -> (
 	 result:MdArray(T, Nd),
 	 ok:bool,
@@ -31,6 +33,13 @@ outplace_unary_map :: proc(
 	
 	result = copy_array(mdarray, allocator=allocator, location=location) or_return
 
+	if size(mdarray) >= THREAD_THR || (force_threaded && size(mdarray) > N_THREADS) {
+		_inner_unary_map_threaded(
+			result, f,
+			allocator, location 
+		)
+		return result, true
+	}
 	for i in 0..<size(mdarray){		
 		f(get_linear_ref(result, i))
 	}
@@ -54,18 +63,82 @@ inplace_unary_map :: proc(
 	mdarray: MdArray($T, $Nd),
 	f: proc(^T), 	
 	location := #caller_location,
+	force_threaded := false,
 ) -> (
 	 ok:bool
 ) where intrinsics.type_is_numeric(T) || intrinsics.type_is_boolean(T){
 	
 	validate_initialized(mdarray, location) or_return
 	
+	if size(mdarray) >= THREAD_THR || (force_threaded && size(mdarray) > N_THREADS) {
+		_inner_unary_map_threaded(
+			mdarray, f,
+			context.allocator, location //the context allocator is temporary 
+		)
+		return true
+	}
+
 	for i in 0..<size(mdarray){		
 		f(get_linear_ref(mdarray, i))
 	}
 	
 	return true
 }
+
+@private
+_inner_unary_map_threaded :: proc(
+	a: MdArray($T, $Nd),
+	f: proc(^T), 	
+	allocator := context.allocator,
+	location := #caller_location,
+) -> (
+	ok: bool,
+) where intrinsics.type_is_numeric(T) ||
+	intrinsics.type_is_boolean(T) {
+
+	Task_Data :: struct{
+		a : ^MdArray(T, Nd),
+		f: proc(^T), 	
+		begin : int,
+		end :int,
+	}
+
+	task_proc :: proc(t: thread.Task){
+		d:= (^Task_Data)(t.data)
+
+		for i in d.begin..<d.end{
+			d.f(get_linear_ref(d.a^, i))
+		}
+	}
+
+	a:=a
+
+	pool : thread.Pool
+	thread.pool_init(&pool, allocator, N_THREADS)
+	thread.pool_start(&pool)
+
+	defer thread.pool_destroy(&pool)
+
+	task_data_a : [N_TASKS]Task_Data
+
+	for t_i in 0..<(N_TASKS){
+		task_allocator : mem.Allocator
+		task_allocator = runtime.nil_allocator()
+
+		task_data := &task_data_a[t_i]
+
+		task_data.a = &a
+		task_data.f = f
+		task_data.begin, task_data.end = get_task_range(t_i, size(a))
+
+		thread.pool_add_task(&pool, task_allocator, task_proc, task_data, t_i)
+	}
+
+	thread.pool_finish(&pool)
+	
+	return true
+}
+
 
 // Sign operations
 @(private="file")

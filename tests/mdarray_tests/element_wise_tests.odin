@@ -3,6 +3,7 @@ package mdarray_tests
 import "core:testing"
 
 @require import md "../../nuod/mdarray"
+@require import rn "../../nuod/random"
 
 
 @(private="file")
@@ -21,6 +22,44 @@ make_with_args_f :: proc($T: typeid)-> proc(T, T,..T)->T{
 make_div_f :: proc($T: typeid)-> proc(T, T,..T)->T{
 	return proc (a: T, b: T, args: ..T) -> T { return a / b }
 }
+
+@(test)
+test_element_wise_threaded :: proc(t: ^testing.T){
+
+	arr := rn.random_float(f32, [2]int{2, 100})
+	defer md.free_mdarray(arr)
+
+
+	{ 
+		el_arr, ok := md.element_wise_map(arr, arr, make_sum_f(f32), force_threaded=true)
+		testing.expect(t, ok)
+		defer md.free_mdarray(el_arr)
+
+		el_arr_, ok_ := md.element_wise_map(arr, arr, make_sum_f(f32))
+		testing.expect(t, ok_)
+		defer md.free_mdarray(el_arr_)
+
+		testing.expect_value(t, el_arr.shape, arr.shape)
+		testing.expect_value(t, len(el_arr.buffer), len(arr.buffer))
+		testing.expect(t, md.all_close(el_arr, el_arr_))
+	}
+
+	{ 
+		el_arr, ok := md.scalar_map(arr, f32(3), make_sum_f(f32), force_threaded=true)
+		testing.expect(t, ok)
+		defer md.free_mdarray(el_arr)
+
+		el_arr_, ok_ := md.scalar_map(arr, f32(3), make_sum_f(f32))
+		testing.expect(t, ok_)
+		defer md.free_mdarray(el_arr_)
+
+		testing.expect_value(t, el_arr.shape, arr.shape)
+		testing.expect_value(t, len(el_arr.buffer), len(arr.buffer))
+		testing.expect(t, md.all_close(el_arr, el_arr_))
+	}
+
+}
+
 
 @(test)
 test_element_wise_map :: proc(t: ^testing.T){

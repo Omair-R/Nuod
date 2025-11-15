@@ -8,6 +8,10 @@ import "core:fmt"
 import "core:math"
 import "core:slice"
 
+N_THREADS :: #config(N_THREADS, 4)
+N_TASKS :: N_THREADS + 1 
+THREAD_THR :: #config(THREAD_THR, 1_000_000)
+
 
 /*
 A structure that represents a multi-dimensional array. it stores all data in a singular
