@@ -15,8 +15,8 @@ It is inspired by the [Numpy](https://github.com/numpy/numpy) Python library.
 - Several matrix factorization techniques.
 - Random number methods with various generators.
 
-## [Documentation](https://github.com/Omair-R/pkg_odin)
-The package is mostly documented through comments in the source code. However, by utilizing a fork of the official Odin documentation tool, Nuod has a static [documentation site](https://github.com/Omair-R/pkg_odin) set up to help with navigation.
+## [Documentation](https://omair-r.github.io/Nuod/)
+The package is mostly documented through comments in the source code. However, by utilizing a [fork](https://github.com/Omair-R/pkg_odin) of the official Odin documentation tool, Nuod has a static [documentation site](https://omair-r.github.io/Nuod/) set up to help with navigation.
 
 ## Usage
 To add Nuod to your project, you may simply make a copy of the "nuod" folder and add it to your project's repository. Aside from the libraries and packages provided by the Odin language, Nuod makes use of only one dependency: OpenBLAS. For MacOS and Linux-based systems, installing the OpenBLAS library may be done globally for ease of use. However, in the case of Windows, copies of the static and dynamic OpenBLAS library files must be included. To facilitate usage, Nuod along with the required OpenBlas files are provided in the release section of this repository. 
