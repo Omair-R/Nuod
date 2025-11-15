@@ -70,6 +70,8 @@ To use Nuod with Windows, you may use the "Nuod_win" release archive in the Rele
 
 ## Simple Example
 
+### Finding the inner product between two matrices.
+
 ```odin
 package main
 
@@ -113,6 +115,70 @@ main :: proc () {
 
 ```
 
+### Finding the two-dimensional fast Fourier transform
+```odin
+package main
+
+import "core:log"
+import "core:fmt"
+import md "nuod/mdarray"
+import fft "nuod/fft"
+import rn "nuod/random"
+import "core:math/rand"
+
+main :: proc () {
+
+  // create a console logger to view log messages created by the library.
+	logger:= log.create_console_logger()
+	context.logger = logger
+	defer log.destroy_console_logger(logger)
+
+  // you can make use of the provided odin-compatible random number generators.
+	context.random_generator = rn.pcg_random_generator()
+	rand.reset(64)
+
+  // create a random array of type f64 with a dimensions (2, 64),
+  // sampled from a normal distribution
+	arr := rn.normal_sample(
+	  mean=f64(0.0),
+	  stddev=f64(1.0),
+	  shape=[2]int{2, 64}
+	)
+
+  // cast the array to complex type, this will generate an array of 
+    arr_c := md.cast_array(arr, complex128)
+
+  // perform the two-dimensional fast Fourier transform. 
+    f_arr := fft.fft2d(arr_c)
+
+  // take the inverse of the fft. 
+    arr_c_ := fft.fft2d(f_arr, inverse=true)
+  
+  // confirm that the arrays before and after the transform are very close! 
+    fmt.assertf(
+      md.all_close(arr_c, arr_c_),
+      "The provided arrays aren't close :("
+    )
+
+  // subtract the two arrays to create an error array. 
+    err_a := md.subtract(arr_c, arr_c_)
+
+  // perform the absolute operator in place.
+    md.i_abs(err_a)
+
+  // take the sum of all the errors in the absolute error array.
+    sae := real(md.all_reduce_sum(err_a))
+
+    fmt.printfln("Sum of Abs Errors: %v", sae)
+
+  // free the created arrays.
+	md.free_mdarray(arr)
+	md.free_mdarray(arr_c)
+	md.free_mdarray(f_arr)
+	md.free_mdarray(arr_c_)
+	md.free_mdarray(err_a)
+}
+```
 ***more examples will soon be provided!***
 
 ## Running Tests
