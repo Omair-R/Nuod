@@ -1,22 +1,25 @@
 <img width="1391" height="376" alt="Nuod_cover" src="https://github.com/user-attachments/assets/64d3606f-7d58-40d7-a448-37789cc4fe06" />
 
 -----
-Nuod (Numerical Odin) is an [Odin](https://odin-lang.org/) package for creating, manipulating and performing numerical operations on multi-dimensional arrays. 
-It is inspired by the [Numpy](https://github.com/numpy/numpy) python library.
+Nuod (Numerical Odin) is an [Odin](https://odin-lang.org/) package for creating, manipulating, and performing numerical operations on multi-dimensional arrays. 
+It is inspired by the [Numpy](https://github.com/numpy/numpy) Python library.
 
-> [!CAUTION]
-> Noud is a work in progress.
+> [!IMPORTANT]
+> Noud is now in early access. It does pass all the tests; however, the tests are still limited. If you face any bugs, unexpected errors, or issue, please report it in the Issues section.
 
 ## Features
 - A flexible multi-dimensional array type with various manipulation procedures.
-- Various mathimatical procedures.
-- Multi-dimensional fast fourier transform procedures.
+- Various mathematical procedures.
+- Multi-dimensional fast Fourier transform procedures.
 - Basic linear algebra procedures.
 - Several matrix factorization techniques.
 - Random number methods with various generators.
 
+## [Documentation](https://github.com/Omair-R/pkg_odin)
+The package is mostly documented through comments in the source code. However, by utilizing a fork of the official Odin documentation tool, Nuod has a static [documentation site](https://github.com/Omair-R/pkg_odin) set up to help with navigation.
+
 ## Usage
-To add Nuod to your project, you may simply make a copy of the "nuod" folder and add it to your project's repository. Aside from the libraries and packages provided by the Odin language, Nuod makes use of only one dependency: OpenBlas. For MacOS and Linux-based systems, installing the OpenBlas library may be done globally for ease of use. However, in the case of Windows, copies of the static and dynamic OpenBlas library files must be included. To facilitate usage, Nuod along with the required OpenBlas files ***are soon to be*** provided in the release section of this repository. 
+To add Nuod to your project, you may simply make a copy of the "nuod" folder and add it to your project's repository. Aside from the libraries and packages provided by the Odin language, Nuod makes use of only one dependency: OpenBLAS. For MacOS and Linux-based systems, installing the OpenBLAS library may be done globally for ease of use. However, in the case of Windows, copies of the static and dynamic OpenBLAS library files must be included. To facilitate usage, Nuod along with the required OpenBlas files are provided in the release section of this repository. 
 
 To install the OpenBlas dependency you may follow:
 
@@ -62,7 +65,7 @@ To install the OpenBlas dependency you may follow:
   pkg install openblas
 ```
 ### Windows
-***the release files for windows will be uploaded at the start of the pre-alpha phase of the library***
+To use Nuod with Windows, you may use the "Nuod_win" release archive in the Releases section. The current release tag is v0.0.1.
 
 
 ## Simple Example
@@ -111,6 +114,13 @@ main :: proc () {
 ```
 
 ***more examples will soon be provided!***
+
+## Running Tests
+Odin makes testing quite an easy task. Since Nuod has several subpackages you can run the tests by running the following command in your terminal:
+```
+  odin test tests/ -all-packages
+```
+
 ## Acknowledgment
 Special thanks to [Kalsprite](https://github.com/kalsprite) for providing [OpenBLAS](https://github.com/OpenMathLib/OpenBLAS) [bindings](https://github.com/kalsprite/odin-openblas).
 
